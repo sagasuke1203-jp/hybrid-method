@@ -594,6 +594,28 @@ section { display: flex; flex-direction: column; gap: 12px; }
       ],
       src: ['jbrcRecipe', 'jbrcPhilo', 'jbrcResult']
     },
+    yamaguchi: {
+      kind: 'hot',
+      label: '山口スペシャル', sub: 'ムゲンスイッチ',
+      title: '山口スペシャル', byline: '自分のレシピ / HARIOムゲンスイッチで淹れる',
+      ratio: 230 / 15, end: 160, grind: '挽き目は未設定', grindMark: -1, useSwitch: true,
+      doseDefault: 15, tempMode: 'hilo', fixedLo: 70,
+      steps: function (d) {
+        return [
+          { t: 0,  state: 'open', name: '1投目', cum: Math.round(2 * d),        temp: 'hi', note: '0:30までかけて注ぐ。' },
+          { t: 30, state: 'open', name: '2投目', cum: Math.round(10 * d),       temp: 'hi', note: '1:15までかけて注ぐ。この間にケトルへ水を足して{lo}まで下げる。' },
+          { t: 75, state: 'open', name: '3投目', cum: Math.round(d * 230 / 15), temp: 'lo', note: '下げた湯で注ぐ。2:40で落ちきるのが目安。最後にスイッチを閉じるかは好みで。' }
+        ];
+      },
+      why: [],
+      memo: [
+        '自分で決めたレシピ。粉15gで、スケールが30g → 150g → 230gになるまで注ぐ。',
+        '1投目と2投目の湯温は、ほかのレシピと同じ焙煎度別の目安。3投目は70℃。',
+        'スイッチは開けたまま。最後に閉じるかどうかは自由。',
+        '粉の量を変えると、注ぐ量は粉量の2倍・10倍・約15.3倍で計算する。'
+      ],
+      src: []
+    },
     cold: {
       kind: 'ice',
       label: '水出し', sub: 'ひと晩浸ける',
@@ -623,7 +645,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       src: ['philoCold']
     }
   };
-  var ORDER = ['hybrid', 'm46', 'sw1', 'mugen', 'jbrc26', 'iced46', 'cold'];
+  var ORDER = ['hybrid', 'm46', 'sw1', 'mugen', 'jbrc26', 'yamaguchi', 'iced46', 'cold'];
   var COMMON_MEMO = 'タイマー中は、手順が切り替わるたびに短い音が2回、終わりの時刻で3回鳴る。iPhoneは消音モードだと鳴らない。';
 
   // ---------- 保存 ----------
@@ -672,6 +694,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     if (R.tempMode === 'fixed') return R.fixedTempText || R.fixedTemp + '℃';
     if (R.tempMode === 'fixed2') return (k === 'hi' ? R.fixedHi : R.fixedLo) + '℃';
     var r = ROAST[roast];
+    if (k === 'lo' && R.fixedLo) return R.fixedLo + '℃';
     return k === 'hi' ? '約' + r.hi + '℃' : r.lo + '℃前後';
   }
   function pressAll(ctl, attr, val) {
@@ -733,6 +756,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     $('title').textContent = R.title;
     $('optsSec').hidden = R.options !== '46' && R.options !== '46i';
     $('strengthBox').hidden = R.options !== '46';
+    $('why').parentElement.hidden = !R.why.length;
     $('why').innerHTML = R.why.map(function (w) {
       return '<div class="idea ' + w[0] + '"><b>' + w[1] + '</b><span>' + w[2] + '</span></div>';
     }).join('');
@@ -776,13 +800,15 @@ section { display: flex; flex-direction: column; gap: 12px; }
       '<li>粉 <span class="num">' + dose + 'g</span>(' + R.grind + ')</li>' +
       '<li>' + (R.cold ? '水' : 'お湯') + ' <span class="num">' + total + 'g</span></li>' +
       (R.serverIce ? '<li>氷(サーバー) <span class="num">' + Math.round(R.serverIce * dose) + 'g</span></li>'
-                   : '<li>比率 <span class="num">1:' + R.ratio + '</span></li>') +
+                   : '<li>比率 <span class="num">1:' + Math.round(R.ratio * 10) / 10 + '</span></li>') +
       '<li>所要 約<span class="num">' + (R.timeText || fmt(END)) + '</span></li>';
 
     var r = ROAST[roast];
     $('h-roast').textContent = R.tempMode === 'hilo' || R.tempMode === 'hi' ? '焙煎度で湯温を変える' : '焙煎度と湯温';
     if (R.tempMode === 'hilo') {
-      $('temps').innerHTML = '<span>透過の湯温<b class="num">' + r.hi + '℃</b></span><span>最後の浸漬<b class="num">' + r.lo + '℃</b></span>';
+      $('temps').innerHTML = R.fixedLo
+        ? '<span>1・2投目<b class="num">' + r.hi + '℃</b></span><span>3投目<b class="num">' + R.fixedLo + '℃</b></span>'
+        : '<span>透過の湯温<b class="num">' + r.hi + '℃</b></span><span>最後の浸漬<b class="num">' + r.lo + '℃</b></span>';
     } else if (R.tempMode === 'hi') {
       $('temps').innerHTML = '<span>湯温<b class="num">' + r.hi + '℃</b></span>';
     } else if (R.tempMode === 'none') {
