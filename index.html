@@ -2,18 +2,18 @@
 <html lang="ja">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ニューハイブリッドメソッド</title>
+<title>Coffeeレシピ</title>
 <meta name="theme-color" content="#F2F4F3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E1412" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ハイブリッド">
+<meta name="apple-mobile-web-app-title" content="Coffeeレシピ">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
 <style>
-/* Layout: 1カラムのレシピカード。上から 設定 → 時間軸 → 手順 → 考え方 の順。
+/* Layout: 1カラムのレシピカード。上から レシピ選択 → 設定 → 時間軸 → 手順 → 考え方 の順。
    緑青=透過(スイッチOPEN)、琥珀=浸漬(スイッチCLOSE)で状態を色分け */
 :root {
   --bg: #F2F4F3;
@@ -26,6 +26,7 @@
   --steep: #96561A;
   --steep-bg: #F5E5D0;
   --on-solid: #FFFFFF;
+  --grain: #6B4423;
   --font-body: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -41,6 +42,7 @@
     --steep: #E2A45E;
     --steep-bg: #35271A;
     --on-solid: #0E1412;
+    --grain: #B98A5E;
     color-scheme: dark;
   }
 }
@@ -55,6 +57,7 @@
   --steep: #E2A45E;
   --steep-bg: #35271A;
   --on-solid: #0E1412;
+  --grain: #B98A5E;
   color-scheme: dark;
 }
 
@@ -74,6 +77,16 @@ h1, h2, h3, p { margin: 0; }
 h1 { font-size: 30px; line-height: 1.25; font-weight: 900; letter-spacing: 0.01em; text-wrap: balance; }
 h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* recipe picker */
+.recipes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.recipes button {
+  min-height: 52px; padding: 6px 4px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 6px; font-family: var(--font-body); font-weight: 700; font-size: 13px; line-height: 1.3; cursor: pointer;
+}
+.recipes button small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
+.recipes button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.recipes button[aria-pressed="true"] small { color: var(--bg); opacity: 0.75; }
 
 /* header */
 header { display: flex; flex-direction: column; gap: 12px; }
@@ -97,15 +110,61 @@ header { display: flex; flex-direction: column; gap: 12px; }
 .stepper output small { font-size: 14px; color: var(--muted); margin-left: 2px; }
 .dose-total { font-size: 14px; color: var(--muted); }
 .dose-total b { color: var(--ink); font-size: 18px; font-weight: 600; }
-button:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
 
 /* roast */
 .roast { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
 .seg-ctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.seg-ctl button { height: 44px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px; font-family: var(--font-body); font-weight: 700; font-size: 14px; cursor: pointer; }
+.seg-ctl button { min-height: 44px; padding: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px; font-family: var(--font-body); font-weight: 700; font-size: 14px; line-height: 1.3; cursor: pointer; }
+.seg-ctl button small { display: block; font-size: 11px; font-weight: 500; }
 .seg-ctl button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.temps { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 14px; color: var(--muted); }
+.temps { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 22px; font-size: 14px; color: var(--muted); }
 .temps b { color: var(--ink); font-size: 22px; font-weight: 600; margin-left: 6px; }
+.temps .fixed { font-size: 13px; }
+
+/* 見本(折りたたみ) */
+.ref { border-top: 1px solid var(--line); padding-top: 10px; }
+.ref summary { cursor: pointer; font-size: 14px; font-weight: 700; padding: 6px 0; list-style-position: inside; }
+.ref-body { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; }
+.ref-lead { font-size: 13px; color: var(--muted); }
+.ref-h { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; }
+.bean-strip { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.lv {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 8px 2px 6px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--ink); cursor: pointer; font-family: var(--font-body);
+}
+.lv[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.lv .name { font-size: 11px; font-weight: 700; line-height: 1.2; text-align: center; }
+.lv .grp { font-size: 10px; color: var(--muted); line-height: 1.2; }
+.lv.in-group .grp { color: var(--ink); font-weight: 700; }
+.bean {
+  position: relative; width: 22px; height: 29px; border-radius: 50%;
+  transform: rotate(-18deg);
+  box-shadow: inset -3px -4px 6px rgba(0,0,0,0.28), inset 3px 3px 5px rgba(255,255,255,0.14);
+}
+.bean::after {
+  content: ""; position: absolute; left: 50%; top: 14%; bottom: 14%; width: 3px; margin-left: -1.5px;
+  border-radius: 2px; background: rgba(0,0,0,0.45); transform: skewX(-8deg);
+}
+.bean.oily { box-shadow: inset -3px -4px 6px rgba(0,0,0,0.35), inset 4px 4px 4px rgba(255,255,255,0.32); }
+.bean-info { font-size: 14px; background: var(--bg); border-radius: 6px; padding: 10px 12px; }
+.bean-info b { font-weight: 700; }
+.bean-info span { display: block; color: var(--muted); font-size: 13px; }
+.grind-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.grind-list li { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 6px; }
+.grind-list li.mark { border-color: var(--flow); box-shadow: inset 0 0 0 1px var(--flow); }
+.grind-list svg { width: 72px; height: 44px; display: block; border-radius: 4px; background: var(--bg); }
+.grind-list svg ellipse { fill: var(--grain); }
+.grind-list .txt { min-width: 0; display: flex; flex-direction: column; }
+.grind-list .gname { font-size: 15px; font-weight: 700; }
+.grind-list .sugar, .grind-list .use { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; background: var(--flow-bg); color: var(--flow); white-space: nowrap; }
+.ref-tip { font-size: 13px; color: var(--muted); }
+
+/* 4:6 options */
+.opts { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.opt-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
 
 /* timeline */
 .timeline { display: flex; flex-direction: column; gap: 10px; }
@@ -113,8 +172,8 @@ button:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
 .seg { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--on-solid); min-width: 0; overflow: hidden; }
 .seg.open { background: var(--flow); }
 .seg.close { background: var(--steep); }
-.seg:first-child { border-radius: 5px 0 0 5px; }
-.seg:last-child { border-radius: 0 5px 5px 0; }
+.seg.first { border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
+.seg.last { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
 .marker { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--ink); left: 0; transition: left 0.25s linear; pointer-events: none; }
 .ticks { position: relative; height: 16px; font-size: 11px; color: var(--muted); }
 .ticks span { position: absolute; transform: translateX(-50%); font-family: var(--font-num); }
@@ -155,6 +214,7 @@ button:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
 .amount { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .amount .big { font-size: 28px; font-weight: 600; line-height: 1.2; }
 .amount .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.amount .big.wait { font-size: 20px; }
 .amount .diff { font-size: 13px; color: var(--muted); }
 .temp { font-size: 13px; font-weight: 700; }
 .step.open .temp { color: var(--flow); }
@@ -163,7 +223,7 @@ button:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
 
 /* notes */
 .notes { display: flex; flex-direction: column; gap: 12px; }
-.idea { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--line); }
+.idea { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--line); }
 .idea b { font-size: 14px; }
 .idea.f b { color: var(--flow); }
 .idea.s b { color: var(--steep); }
@@ -174,6 +234,13 @@ button:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
 .src a { color: var(--ink); text-underline-offset: 3px; }
 section { display: flex; flex-direction: column; gap: 12px; }
 
+@media (max-width: 480px) {
+  .recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bean-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grind-list li { grid-template-columns: 60px minmax(0, 1fr); }
+  .grind-list svg { width: 60px; height: 40px; }
+  .grind-list .badge { grid-column: 2; justify-self: start; }
+}
 @media (max-width: 420px) {
   h1 { font-size: 26px; }
   .step { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
@@ -184,15 +251,15 @@ section { display: flex; flex-direction: column; gap: 12px; }
 </style>
 
 <div class="wrap">
+  <section aria-labelledby="h-recipe">
+    <h2 id="h-recipe">レシピ</h2>
+    <div class="recipes" id="recipeCtl"></div>
+  </section>
+
   <header>
-    <p class="byline">粕谷哲さん考案 / HARIOスイッチで淹れる</p>
-    <h1>ニューハイブリッドメソッド</h1>
-    <ul class="spec">
-      <li>粉 <span class="num">20g</span>(中挽き)</li>
-      <li>お湯 <span class="num">300g</span></li>
-      <li>比率 <span class="num">1:15</span></li>
-      <li>所要 約<span class="num">3:30</span></li>
-    </ul>
+    <p class="byline" id="byline"></p>
+    <h1 id="title"></h1>
+    <ul class="spec" id="spec"></ul>
   </header>
 
   <section aria-labelledby="h-dose">
@@ -215,9 +282,39 @@ section { display: flex; flex-direction: column; gap: 12px; }
         <button type="button" data-r="medium" aria-pressed="true">中煎り</button>
         <button type="button" data-r="dark" aria-pressed="false">深煎り</button>
       </div>
-      <div class="temps">
-        <span>透過の湯温<b class="num" id="hiOut">88℃</b></span>
-        <span>最後の浸漬<b class="num" id="loOut">75℃</b></span>
+      <div class="temps" id="temps"></div>
+      <details class="ref" id="refBox">
+        <summary>焙煎度と挽き目の見本</summary>
+        <div class="ref-body">
+          <p class="ref-lead">豆の袋に書いてある焙煎度をタップすると、上の浅煎り・中煎り・深煎りが切り替わる。</p>
+          <div class="bean-strip" id="beanStrip"></div>
+          <p class="bean-info" id="beanInfo" aria-live="polite"></p>
+          <h3 class="ref-h">挽き目</h3>
+          <ul class="grind-list" id="grindList"></ul>
+          <p class="ref-tip">落ちきるのが目安より遅いなら少し粗く、早くて味が薄いなら少し細かくする。豆の色と粒は画面上の目安。</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-opts" id="optsSec" hidden>
+    <h2 id="h-opts">味と濃さを変える</h2>
+    <div class="opts">
+      <div>
+        <p class="opt-label">味(前半4割の分け方)</p>
+        <div class="seg-ctl" id="tasteCtl">
+          <button type="button" data-v="sweet" aria-pressed="false">甘め<small>1投目を少なく</small></button>
+          <button type="button" data-v="std" aria-pressed="true">標準<small>同じ量</small></button>
+          <button type="button" data-v="bright" aria-pressed="false">明るめ<small>1投目を多く</small></button>
+        </div>
+      </div>
+      <div>
+        <p class="opt-label">濃さ(後半6割を注ぐ回数)</p>
+        <div class="seg-ctl" id="strengthCtl">
+          <button type="button" data-v="1" aria-pressed="false">軽め<small>1回</small></button>
+          <button type="button" data-v="2" aria-pressed="false">中くらい<small>2回</small></button>
+          <button type="button" data-v="3" aria-pressed="true">しっかり<small>3回</small></button>
+        </div>
       </div>
     </div>
   </section>
@@ -225,12 +322,9 @@ section { display: flex; flex-direction: column; gap: 12px; }
   <section aria-labelledby="h-time">
     <h2 id="h-time">時間の流れ</h2>
     <div class="timeline">
-      <div class="bar" id="bar" role="img" aria-label="0:00から3:30までのスイッチ開閉の流れ"></div>
+      <div class="bar" id="bar" role="img"></div>
       <div class="ticks" id="ticks" aria-hidden="true"></div>
-      <div class="legend">
-        <span><i class="f"></i>スイッチ OPEN(透過)</span>
-        <span><i class="s"></i>スイッチ CLOSE(浸漬)</span>
-      </div>
+      <div class="legend" id="legend"></div>
     </div>
     <div class="timer">
       <div class="clock num" id="clock" aria-live="off">0:00</div>
@@ -247,50 +341,166 @@ section { display: flex; flex-direction: column; gap: 12px; }
   </section>
 
   <section aria-labelledby="h-why">
-    <h2 id="h-why">この順番にする理由</h2>
-    <div class="notes">
-      <div class="idea s"><b>最初は浸漬</b><span>湯を落とさず蒸らして、成分が出やすい状態をつくる。</span></div>
-      <div class="idea f"><b>次に透過</b><span>スイッチを開けて、成分をしっかり引き出す。</span></div>
-      <div class="idea s"><b>最後は浸漬</b><span>雑味が出やすい後半は、湯温を下げて閉じる。</span></div>
-    </div>
+    <h2 id="h-why">このレシピの考え方</h2>
+    <div class="notes" id="why"></div>
   </section>
 
   <section aria-labelledby="h-memo">
     <h2 id="h-memo">メモ</h2>
-    <div class="caveat">
-      <ul>
-        <li>1:30の注湯の間に、ケトルへ水を足して湯温を下げる。ここが一番あわただしい。</li>
-        <li>タイマー中は、手順が切り替わるたびに短い音が2回、3:30で3回鳴る。iPhoneは消音モードだと鳴らない。</li>
-        <li>透過の湯温は、粕谷さんが示した焙煎度別の目安(浅煎り93℃前後、中煎り88℃前後、深煎り83℃前後)を使っている。元のレシピは約90℃。</li>
-        <li>最後の浸漬の湯温は、元レシピの70〜80℃の範囲を、焙煎度に合わせてこのページで割り振った目安(浅80℃、中75℃、深70℃)。粕谷さんの指定ではない。</li>
-        <li>最初の蒸らしは記事によって40秒と45秒の表記がある。このページは45秒にしている。</li>
-        <li>粉の量を変えると、注ぐ量は粉量の2倍、6倍、10倍、15倍で計算する。</li>
-        <li>粕谷さんの動画を見た人の解説記事をもとにまとめたもの。細かい数値は動画で確認する。</li>
-        <li>動画の元祖ハイブリッドは透過から始めるレシピで、フルーティさ重視。こちらは甘み重視。</li>
-      </ul>
-    </div>
-    <p class="src">
-      出典:
-      <a href="https://coffeebeats-life.com/new_hybridmethod/" target="_blank" rel="noopener">Coffee Beats! ニューハイブリッドメソッド解説</a>
-      <a href="https://waves-coffee.com/hybridmethod/1319/" target="_blank" rel="noopener">WAVES COFFEE ハイブリッドメソッド</a>
-      <a href="https://note.com/koukiukinko/n/n793dee2bdcfc" target="_blank" rel="noopener">コウキュウキンコ(note) 元祖との比較</a>
-      <a href="https://dime.jp/genre/1310283/" target="_blank" rel="noopener">DIME 粕谷さんの焙煎度別の湯温</a>
-    </p>
+    <div class="caveat"><ul id="memo"></ul></div>
+    <p class="src" id="src"></p>
   </section>
 </div>
 
 <script>
 (function () {
-  var STEPS = [
-    { t: 0,   state: 'close', name: '蒸らし',     k: 2,  temp: 'hi',   note: '全体が浸る程度まで注いで、そのまま待つ。' },
-    { t: 45,  state: 'open',  name: '透過 前半',  k: 6,  temp: 'hi',   note: 'スイッチを開けて、全体の40%まで注ぐ。' },
-    { t: 90,  state: 'open',  name: '透過 後半',  k: 10, temp: 'hi',   note: '開けたまま注ぐ。この間にケトルへ水を足して{lo}まで下げる。' },
-    { t: 130, state: 'close', name: '低温で浸漬', k: 15, temp: 'lo',   note: 'スイッチを閉じて、下げた湯で最後まで注ぐ。' },
-    { t: 165, state: 'open',  name: '落とす',     k: null, temp: '',      note: 'スイッチを開けて、落ちきったら完了。' }
-  ];
-  var END = 210;
-  var ROAST = { light: { hi: 93, lo: 80 }, medium: { hi: 88, lo: 75 }, dark: { hi: 83, lo: 70 } };
+  // ---------- データ ----------
+  // 焙煎度別の湯温。hi は粕谷さんが示した焙煎度別の目安。lo はハイブリッドの最後の浸漬用にこのページで割り振った目安
+  var ROAST = { light: { label: '浅煎り', hi: 93, lo: 80 }, medium: { label: '中煎り', hi: 88, lo: 75 }, dark: { label: '深煎り', hi: 83, lo: 70 } };
 
+  var BEANS = [
+    { name: 'ライト',     c: '#C8A46E', g: 'light',  crack: '1ハゼの前',               taste: '穀物のような青さと鋭い酸味。店頭ではほとんど見かけない。' },
+    { name: 'シナモン',   c: '#B07D48', g: 'light',  crack: '1ハゼの前後',             taste: '酸味が強く、苦みは少ない。' },
+    { name: 'ミディアム', c: '#94612F', g: 'light',  crack: '1ハゼの途中〜終わり',     taste: '酸味が主体で軽い口当たり。' },
+    { name: 'ハイ',       c: '#7A4A24', g: 'medium', crack: '1ハゼのあと、2ハゼの手前', taste: '酸味と甘みのバランスがいい。' },
+    { name: 'シティ',     c: '#613718', g: 'medium', crack: '2ハゼの直前〜始まり',     taste: '苦みとコクが出てくる。日本の喫茶店で標準的。' },
+    { name: 'フルシティ', c: '#4B2912', g: 'dark',   crack: '2ハゼの最中',             taste: '苦みが主体になり、酸味は控えめ。' },
+    { name: 'フレンチ',   c: '#36200F', g: 'dark',   crack: '2ハゼの後半〜終わり',     taste: '強い苦みとスモーキーな香り。表面に油が浮く。', oily: true },
+    { name: 'イタリアン', c: '#241510', g: 'dark',   crack: '2ハゼが終わったあと',     taste: '最も深い。焦げに近い苦み。', oily: true }
+  ];
+  var GRINDS = [
+    { name: '極細挽き', sugar: '白砂糖ほど',                 use: 'エスプレッソ', r: 1.3 },
+    { name: '細挽き',   sugar: '白砂糖とグラニュー糖の中間', use: 'ウォータードリップ', r: 2.1 },
+    { name: '中細挽き', sugar: 'グラニュー糖ほど',           use: 'ペーパードリップ', r: 3.0 },
+    { name: '中挽き',   sugar: 'グラニュー糖とザラメの中間', use: 'サイフォン、ネルドリップ', r: 4.0 },
+    { name: '粗挽き',   sugar: 'ザラメほど',                 use: 'フレンチプレス', r: 5.4 }
+  ];
+
+  var SRC = {
+    beats: ['https://coffeebeats-life.com/new_hybridmethod/', 'Coffee Beats! ニューハイブリッドメソッド解説'],
+    waves: ['https://waves-coffee.com/hybridmethod/1319/', 'WAVES COFFEE ハイブリッドメソッド'],
+    note: ['https://note.com/koukiukinko/n/n793dee2bdcfc', 'コウキュウキンコ(note) 元祖との比較'],
+    dime: ['https://dime.jp/genre/1310283/', 'DIME 粕谷さんの焙煎度別の湯温'],
+    philo: ['https://en.philocoffea.com/en-th/blogs/blog/coffee-brewing-method', 'Philocoffea(粕谷さんの店) 4:6メソッド'],
+    precious: ['https://precious.jp/articles/-/8470', 'Precious 粕谷さんの4:6メソッド'],
+    bepal: ['https://www.bepal.net/archives/648871', 'BE-PAL 浸漬式ドリッパー スイッチ360のレビュー'],
+    kurasu: ['https://kurasu.kyoto/blogs/kurasu-journal/tested-by-kurasu-harios-3-new-products', 'Kurasu HARIO公式レシピでMUGENを試した記事'],
+    impress: ['https://kaden.watch.impress.co.jp/docs/news/1312602.html', '家電Watch MUGENの使い方'],
+    harioEu: ['https://hario-europe.com/blogs/hario-community/tetsu-kasuya-introduces-the-mugen-dripper', 'HARIO Europe 粕谷さんによるMUGENの紹介'],
+    grind: ['https://coffee-labo.co.jp/pour/', 'coffee-labo 挽き目と砂糖のたとえ'],
+    roast: ['https://coffee-labo.co.jp/frenchroast/', 'coffee-labo 焙煎度とハゼの表']
+  };
+
+  var RECIPES = {
+    hybrid: {
+      label: 'ニューハイブリッド', sub: 'スイッチ',
+      title: 'ニューハイブリッドメソッド', byline: '粕谷哲さん考案 / HARIOスイッチで淹れる',
+      ratio: 15, end: 210, grind: '中挽き', grindMark: 3, useSwitch: true, tempMode: 'hilo',
+      steps: function (d) {
+        return [
+          { t: 0,   state: 'close', name: '蒸らし',     cum: 2 * d,  temp: 'hi', note: '全体が浸る程度まで注いで、そのまま待つ。' },
+          { t: 45,  state: 'open',  name: '透過 前半',  cum: 6 * d,  temp: 'hi', note: 'スイッチを開けて、全体の40%まで注ぐ。' },
+          { t: 90,  state: 'open',  name: '透過 後半',  cum: 10 * d, temp: 'hi', note: '開けたまま注ぐ。この間にケトルへ水を足して{lo}まで下げる。' },
+          { t: 130, state: 'close', name: '低温で浸漬', cum: 15 * d, temp: 'lo', note: 'スイッチを閉じて、下げた湯で最後まで注ぐ。' },
+          { t: 165, state: 'open',  name: '落とす',     cum: null,   temp: '',   note: 'スイッチを開けて、落ちきったら完了。' }
+        ];
+      },
+      why: [
+        ['s', '最初は浸漬', '湯を落とさず蒸らして、成分が出やすい状態をつくる。'],
+        ['f', '次に透過', 'スイッチを開けて、成分をしっかり引き出す。'],
+        ['s', '最後は浸漬', '雑味が出やすい後半は、湯温を下げて閉じる。']
+      ],
+      memo: [
+        '1:30の注湯の間に、ケトルへ水を足して湯温を下げる。ここが一番あわただしい。',
+        '透過の湯温は、粕谷さんが示した焙煎度別の目安(浅煎り93℃前後、中煎り88℃前後、深煎り83℃前後)を使っている。元のレシピは約90℃。',
+        '最後の浸漬の湯温は、元レシピの70〜80℃の範囲を、焙煎度に合わせてこのページで割り振った目安(浅80℃、中75℃、深70℃)。粕谷さんの指定ではない。',
+        '最初の蒸らしは記事によって40秒と45秒の表記がある。このページは45秒にしている。',
+        '挽き目は、解説記事の筆者がコマンダンテ28クリック(中挽き程度)で淹れていた例。粕谷さんの指定値ではない。',
+        '粕谷さんの動画を見た人の解説記事をもとにまとめたもの。細かい数値は動画で確認する。',
+        '動画の元祖ハイブリッドは透過から始めるレシピで、フルーティさ重視。こちらは甘み重視。'
+      ],
+      src: ['beats', 'waves', 'note', 'dime']
+    },
+    m46: {
+      label: '4:6メソッド', sub: 'スイッチ開け / V60',
+      title: '4:6メソッド', byline: '粕谷哲さん考案 / HARIOスイッチを開けたまま、またはV60で淹れる',
+      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, useSwitch: false, tempMode: 'hi', options: true,
+      steps: function (d, o) {
+        var first = Math.round({ sweet: 2.5, std: 3, bright: 3.5 }[o.taste] * d);
+        var times = { 1: [90], 2: [90, 135], 3: [90, 135, 165] }[o.strength];
+        var list = [
+          { t: 0,  state: 'open', name: '1投目', cum: first, temp: 'hi', note: '粉全体にまんべんなく注ぐ。前半4割の1回目。' },
+          { t: 45, state: 'open', name: '2投目', cum: 6 * d, temp: 'hi', note: '前の湯がほぼ落ちてから注ぐ。ここまでの4割で甘さと酸味が決まる。' }
+        ];
+        times.forEach(function (t, i) {
+          list.push({ t: t, state: 'open', name: (i + 3) + '投目', cum: Math.round(6 * d + 9 * d * (i + 1) / times.length), temp: 'hi',
+            note: i === 0 ? '前の湯がほぼ落ちてから注ぐ。ここからの6割で濃さが決まる。' : '前の湯がほぼ落ちてから注ぐ。' });
+        });
+        list.push({ t: 210, state: 'open', name: 'ドリッパーを外す', cum: null, temp: '', note: '落ちきっていなくても、3:30で外す。' });
+        return list;
+      },
+      why: [
+        ['f', '前半の4割', '1投目と2投目の分け方で、甘さと酸味のバランスを決める。1投目を少なくすると甘め、多くすると明るめになる。'],
+        ['f', '後半の6割', '注ぐ回数で濃さを決める。回数が多いほど濃い。粕谷さんのおすすめは3回。']
+      ],
+      memo: [
+        '時刻と量は、粕谷さんの店 Philocoffea の公式ページのとおり(後半を3回に分けるとき)。',
+        '後半を1回・2回にしたときの注ぐ時刻は、このページで決めた目安。',
+        '甘め・明るめの1投目の量(粉量の2.5倍・3.5倍)は、このページで決めた例。公式は「1投目を2投目より少なく(多く)」とだけ書いている。',
+        '深煎りは濃く出やすいので、後半を2回から始めるのがおすすめとされている。',
+        '挽き目は中粗〜粗挽き。時刻どおりに湯が落ちるよう、挽き目で合わせる。',
+        'HARIOスイッチは、開けたまま使えばV60と同じように淹れられる。'
+      ],
+      src: ['philo', 'precious', 'dime']
+    },
+    sw1: {
+      label: 'スイッチ一投', sub: '閉じて浸す',
+      title: 'スイッチで一投', byline: 'HARIOスイッチの基本の使い方 / 数値はこのページの目安',
+      ratio: 15, end: 180, grind: '中挽き', grindMark: 3, useSwitch: true, tempMode: 'hi',
+      steps: function (d) {
+        return [
+          { t: 0,   state: 'close', name: '全量を注ぐ',   cum: 15 * d, temp: 'hi', note: 'スイッチを閉じて、一度に全部注ぐ。粉がすべて湯に浸るように。' },
+          { t: 120, state: 'open',  name: '開けて落とす', cum: null,   temp: '',   note: 'スイッチを開ける。落ちきったら完了。' }
+        ];
+      },
+      why: [
+        ['s', '閉じて浸す', '全量を浸すので、注ぎ方で味がぶれにくい。'],
+        ['f', '開けて落とす', '浸す時間で濃さが変わる。長いほど濃い。']
+      ],
+      memo: [
+        '粉量・湯量・時間は、このページで決めた目安。HARIO公式の数値は見つけられなかった。',
+        '浸す時間は、スイッチを試したレビュー記事の「約2分」を使っている。',
+        '湯温は4:6メソッドと同じ、焙煎度別の目安。'
+      ],
+      src: ['bepal', 'dime']
+    },
+    mugen: {
+      label: 'MUGEN一投', sub: 'MUGEN',
+      title: 'MUGENで一投', byline: 'HARIO公式レシピ / 粕谷さんと共同設計のMUGENドリッパーで淹れる',
+      ratio: 12, end: 150, grind: '中挽き', grindMark: 3, useSwitch: false, tempMode: 'fixed', fixedTemp: 91,
+      steps: function (d) {
+        return [
+          { t: 0,  state: 'open', name: 'ゆっくり注ぐ',   cum: 12 * d, temp: 'hi', note: '中心から渦を描くように、ゆっくり一度に注ぐ。蒸らしはしない。' },
+          { t: 30, state: 'open', name: '落ちるのを待つ', cum: null,   temp: '',   note: '落ちきったら完了。2〜3分が目安。' }
+        ];
+      },
+      why: [
+        ['f', '一度に注ぐ', 'ドリッパーの溝でペーパーが貼りつき、湯がゆっくり一定の速さで落ちる。蒸らしや分けて注ぐ手間がいらない。']
+      ],
+      memo: [
+        'HARIOの公式レシピ(粉20g、お湯240ml、91℃、蒸らしなし)。比率は1:12。',
+        'MUGENドリッパー用のレシピ。HARIOスイッチやV60では湯の落ち方が違う。',
+        '挽き目は中挽きと書く記事と、中細挽きと書く記事がある。',
+        '所要時間は公式の「2〜3分」から、2:30を目安にしている。',
+        '注ぐのにかける時間(0:30)は、このページの目安。'
+      ],
+      src: ['kurasu', 'impress', 'harioEu']
+    }
+  };
+  var ORDER = ['hybrid', 'm46', 'sw1', 'mugen'];
+  var COMMON_MEMO = 'タイマー中は、手順が切り替わるたびに短い音が2回、終わりの時刻で3回鳴る。iPhoneは消音モードだと鳴らない。';
+
+  // ---------- 保存 ----------
   // 設定は端末内(localStorage)に保存。使えない環境でも初期値で動く
   function load(key, def) {
     try { var v = window.localStorage.getItem(key); return v === null ? def : v; } catch (e) { return def; }
@@ -298,15 +508,21 @@ section { display: flex; flex-direction: column; gap: 12px; }
   function save(key, val) {
     try { window.localStorage.setItem(key, String(val)); } catch (e) {}
   }
+  var recipeId = load('nhm.recipe', 'hybrid');
+  if (!RECIPES[recipeId]) recipeId = 'hybrid';
   var dose = parseInt(load('nhm.dose', '20'), 10);
   if (!(dose >= 10 && dose <= 40)) dose = 20;
   var roast = load('nhm.roast', 'medium');
   if (!ROAST[roast]) roast = 'medium';
+  var bean = parseInt(load('nhm.bean', '-1'), 10);
+  if (!(bean >= 0 && bean < BEANS.length) || BEANS[bean].g !== roast) bean = -1;
+  var opt = { taste: load('nhm.taste', 'std'), strength: parseInt(load('nhm.strength', '3'), 10) };
+  if (['sweet', 'std', 'bright'].indexOf(opt.taste) < 0) opt.taste = 'std';
+  if ([1, 2, 3].indexOf(opt.strength) < 0) opt.strength = 3;
   var soundOn = load('nhm.sound', '1') === '1';
-  function tempText(k) {
-    var r = ROAST[roast];
-    return k === 'hi' ? '約' + r.hi + '℃' : r.lo + '℃前後';
-  }
+
+  var R = RECIPES[recipeId];
+  var STEPS = [], END = R.end;
   var elapsed = 0, running = false, startedAt = 0, timerId = null;
   var lastIdx = -1, endPlayed = false;
 
@@ -317,48 +533,154 @@ section { display: flex; flex-direction: column; gap: 12px; }
     s = Math.floor(s);
     return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
   }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function stateLabel(s) { return R.useSwitch ? (s === 'open' ? 'OPEN' : 'CLOSE') : '透過'; }
+  function tempText(k) {
+    if (R.tempMode === 'fixed') return R.fixedTemp + '℃';
+    var r = ROAST[roast];
+    return k === 'hi' ? '約' + r.hi + '℃' : r.lo + '℃前後';
+  }
+  function pressAll(ctl, attr, val) {
+    var bs = $(ctl).children;
+    for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', bs[i].getAttribute(attr) === String(val) ? 'true' : 'false');
+  }
+
+  // ---------- 描画 ----------
+  function buildRecipeCtl() {
+    var html = '';
+    ORDER.forEach(function (id) {
+      var r = RECIPES[id];
+      html += '<button type="button" data-id="' + id + '" aria-pressed="false">' + r.label + '<small>' + r.sub + '</small></button>';
+    });
+    $('recipeCtl').innerHTML = html;
+  }
 
   function buildBar() {
-    var html = '';
+    var segs = [];
     STEPS.forEach(function (s, i) {
       var end = i + 1 < STEPS.length ? STEPS[i + 1].t : END;
       var w = ((end - s.t) / END) * 100;
-      html += '<div class="seg ' + s.state + '" style="flex:' + w + ' 1 0">' + (s.state === 'open' ? 'OPEN' : 'CLOSE') + '</div>';
+      if (w > 0) segs.push({ state: s.state, w: w });
     });
+    var html = segs.map(function (g, i) {
+      return '<div class="seg ' + g.state + (i === 0 ? ' first' : '') + (i === segs.length - 1 ? ' last' : '') + '" style="flex:' + g.w + ' 1 0">' + stateLabel(g.state) + '</div>';
+    }).join('');
     html += '<div class="marker" id="marker"></div>';
     barEl.innerHTML = html;
+    barEl.setAttribute('aria-label', '0:00から' + fmt(END) + 'までの流れ');
     var th = '';
     STEPS.forEach(function (s) {
-      th += '<span style="left:' + (s.t / END) * 100 + '%">' + fmt(s.t) + '</span>';
+      if (s.t < END) th += '<span style="left:' + (s.t / END) * 100 + '%">' + fmt(s.t) + '</span>';
     });
     th += '<span style="left:100%">' + fmt(END) + '</span>';
     ticksEl.innerHTML = th;
+    $('legend').innerHTML = R.useSwitch
+      ? '<span><i class="f"></i>スイッチ OPEN(透過)</span><span><i class="s"></i>スイッチ CLOSE(浸漬)</span>'
+      : '<span><i class="f"></i>透過(湯を落としながら淹れる)</span>';
+  }
+
+  function renderRecipe() {
+    R = RECIPES[recipeId];
+    END = R.end;
+    document.title = R.title;
+    pressAll('recipeCtl', 'data-id', recipeId);
+    $('byline').textContent = R.byline;
+    $('title').textContent = R.title;
+    $('optsSec').hidden = !R.options;
+    $('why').innerHTML = R.why.map(function (w) {
+      return '<div class="idea ' + w[0] + '"><b>' + w[1] + '</b><span>' + w[2] + '</span></div>';
+    }).join('');
+    $('memo').innerHTML = R.memo.concat([COMMON_MEMO]).map(function (m) { return '<li>' + m + '</li>'; }).join('');
+    $('src').innerHTML = '出典:' + R.src.concat(['roast', 'grind']).map(function (k) {
+      return '<a href="' + SRC[k][0] + '" target="_blank" rel="noopener">' + SRC[k][1] + '</a>';
+    }).join('');
+    renderSteps();
   }
 
   function renderSteps() {
-    var html = '';
+    STEPS = R.steps(dose, opt);
+    buildBar();
+    var html = '', prev = 0;
     STEPS.forEach(function (s, i) {
       var amt;
-      if (s.k) {
-        var cum = s.k * dose;
-        var prev = i > 0 && STEPS[i - 1].k ? STEPS[i - 1].k * dose : 0;
-        amt = '<div class="amount"><span class="big num">' + cum + '<small>g まで</small></span>' +
-              '<span class="diff num">+' + (cum - prev) + 'g</span></div>';
+      if (s.cum) {
+        amt = '<div class="amount"><span class="big num">' + s.cum + '<small>g まで</small></span>' +
+              '<span class="diff num">+' + (s.cum - prev) + 'g</span></div>';
+        prev = s.cum;
       } else {
-        amt = '<div class="amount"><span class="big" style="font-size:20px">落ちきるまで待つ</span></div>';
+        amt = '<div class="amount"><span class="big wait">' + (s.t >= END ? '時間になったら外す' : '落ちきるまで待つ') + '</span></div>';
       }
       html += '<li class="step ' + s.state + '" data-i="' + i + '">' +
-        '<div><div class="when num">' + fmt(s.t) + '</div><span class="state">' + (s.state === 'open' ? 'OPEN' : 'CLOSE') + '</span></div>' +
+        '<div><div class="when num">' + fmt(s.t) + '</div><span class="state">' + stateLabel(s.state) + '</span></div>' +
         '<div class="body"><h3>' + s.name + '</h3>' + amt +
         (s.temp ? '<div class="temp">湯温 ' + tempText(s.temp) + '</div>' : '') +
         '<p>' + s.note.replace('{lo}', tempText('lo')) + '</p></div></li>';
     });
     stepsEl.innerHTML = html;
+
+    var total = R.ratio * dose;
     $('doseOut').innerHTML = dose + '<small>g</small>';
-    $('totalOut').textContent = (15 * dose) + 'g';
-    $('hiOut').textContent = ROAST[roast].hi + '℃';
-    $('loOut').textContent = ROAST[roast].lo + '℃';
+    $('totalOut').textContent = total + 'g';
+    $('spec').innerHTML =
+      '<li>粉 <span class="num">' + dose + 'g</span>(' + R.grind + ')</li>' +
+      '<li>お湯 <span class="num">' + total + 'g</span></li>' +
+      '<li>比率 <span class="num">1:' + R.ratio + '</span></li>' +
+      '<li>所要 約<span class="num">' + fmt(END) + '</span></li>';
+
+    var r = ROAST[roast];
+    if (R.tempMode === 'hilo') {
+      $('temps').innerHTML = '<span>透過の湯温<b class="num">' + r.hi + '℃</b></span><span>最後の浸漬<b class="num">' + r.lo + '℃</b></span>';
+    } else if (R.tempMode === 'hi') {
+      $('temps').innerHTML = '<span>湯温<b class="num">' + r.hi + '℃</b></span>';
+    } else {
+      $('temps').innerHTML = '<span>湯温<b class="num">' + R.fixedTemp + '℃</b></span><span class="fixed">公式の湯温。焙煎度では変えない</span>';
+    }
+    pressAll('roastCtl', 'data-r', roast);
+    pressAll('tasteCtl', 'data-v', opt.taste);
+    pressAll('strengthCtl', 'data-v', opt.strength);
+    renderRef();
     paintProgress();
+  }
+
+  // 見本: 豆の色と挽き目
+  function rng(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+  function grains(r, seed) {
+    var rand = rng(seed), out = '', W = 96, H = 56;
+    var n = Math.round(1500 / (r * r * 3.3));
+    for (var i = 0; i < n; i++) {
+      var s = r * (0.6 + rand() * 0.8);
+      var x = (s + rand() * (W - 2 * s)).toFixed(1), y = (s + rand() * (H - 2 * s)).toFixed(1);
+      var ry = (s * (0.7 + rand() * 0.3)).toFixed(2), rot = Math.round(rand() * 180);
+      out += '<ellipse cx="' + x + '" cy="' + y + '" rx="' + s.toFixed(2) + '" ry="' + ry + '" transform="rotate(' + rot + ' ' + x + ' ' + y + ')"/>';
+    }
+    return '<svg viewBox="0 0 96 56" aria-hidden="true">' + out + '</svg>';
+  }
+  function buildRef() {
+    $('beanStrip').innerHTML = BEANS.map(function (b, i) {
+      return '<button type="button" class="lv" data-i="' + i + '" aria-pressed="false">' +
+        '<span class="bean' + (b.oily ? ' oily' : '') + '" style="background:' + b.c + '"></span>' +
+        '<span class="name">' + b.name + '</span><span class="grp">' + ROAST[b.g].label + '</span></button>';
+    }).join('');
+  }
+  function renderRef() {
+    var bs = $('beanStrip').children;
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].setAttribute('aria-pressed', i === bean ? 'true' : 'false');
+      bs[i].classList.toggle('in-group', BEANS[i].g === roast);
+    }
+    if (bean >= 0) {
+      var b = BEANS[bean];
+      $('beanInfo').innerHTML = '<b>' + b.name + 'ロースト(' + ROAST[b.g].label + ')</b> ' + b.taste + '<span>ハゼ: ' + b.crack + '</span>';
+    } else {
+      var names = BEANS.filter(function (b) { return b.g === roast; }).map(function (b) { return b.name; }).join('・');
+      $('beanInfo').innerHTML = '<b>' + ROAST[roast].label + '</b> は ' + names + ' あたり。<span>境目は店によって違う。</span>';
+    }
+    $('grindList').innerHTML = GRINDS.map(function (g, i) {
+      var mark = i === R.grindMark;
+      return '<li' + (mark ? ' class="mark"' : '') + '>' + grains(g.r, 11 + i * 7) +
+        '<span class="txt"><span class="gname">' + g.name + '</span><span class="sugar">' + g.sugar + '</span><span class="use">' + g.use + '</span></span>' +
+        (mark ? '<span class="badge">このレシピ(' + esc(R.grind) + ')</span>' : '') + '</li>';
+    }).join('');
   }
 
   function currentIdx() {
@@ -372,7 +694,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     var show = running || elapsed > 0;
     var items = stepsEl.children;
     for (var j = 0; j < items.length; j++) {
-      items[j].classList.toggle('active', show && j === idx && elapsed < END);
+      items[j].classList.toggle('active', show && j === idx && elapsed < END + 60);
       items[j].classList.toggle('done', show && j < idx);
     }
     var m = $('marker');
@@ -380,7 +702,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
     $('clock').textContent = fmt(elapsed);
   }
 
-  // 音: iPhone Safari はタップ操作の中で AudioContext を作る/再開する必要がある
+  // ---------- 音 ----------
+  // iPhone Safari はタップ操作の中で AudioContext を作る/再開する必要がある
   var actx = null;
   function unlockAudio() {
     if (!actx) {
@@ -409,7 +732,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
   }
   function paintSound() { $('soundBtn').textContent = soundOn ? '音 ON' : '音 OFF'; }
 
-  // 画面スリープ防止: タイマー中だけ Wake Lock を取る。アプリを離れると外れるので戻ったら取り直す
+  // ---------- 画面スリープ防止 ----------
+  // タイマー中だけ Wake Lock を取る。アプリを離れると外れるので戻ったら取り直す
   var wakeLock = null;
   function note(text) { $('timerNote').textContent = text; }
   function lockScreen() {
@@ -428,10 +752,11 @@ section { display: flex; flex-direction: column; gap: 12px; }
     if (running && document.visibilityState === 'visible' && !wakeLock) lockScreen();
   });
 
+  // ---------- タイマー ----------
   function tick() {
     elapsed = (Date.now() - startedAt) / 1000;
     var idx = currentIdx();
-    if (idx > lastIdx && lastIdx >= 0) beep(2, 880, 0.15);
+    if (idx > lastIdx && lastIdx >= 0 && STEPS[idx].t < END) beep(2, 880, 0.15);
     lastIdx = idx;
     if (!endPlayed && elapsed >= END) { endPlayed = true; beep(3, 660, 0.25); }
     if (elapsed >= END + 60) { stop(); }
@@ -455,34 +780,64 @@ section { display: flex; flex-direction: column; gap: 12px; }
     $('startBtn').textContent = elapsed > 0 ? '再開' : 'スタート';
     $('startBtn').setAttribute('aria-pressed', 'false');
   }
+  function reset() { stop(); elapsed = 0; lastIdx = -1; endPlayed = false; $('startBtn').textContent = 'スタート'; paintProgress(); }
 
+  // ---------- 操作 ----------
   $('startBtn').addEventListener('click', function () { running ? stop() : start(); });
-  $('resetBtn').addEventListener('click', function () { stop(); elapsed = 0; lastIdx = -1; endPlayed = false; $('startBtn').textContent = 'スタート'; paintProgress(); });
+  $('resetBtn').addEventListener('click', reset);
   $('soundBtn').addEventListener('click', function () {
     soundOn = !soundOn;
     save('nhm.sound', soundOn ? '1' : '0');
     paintSound();
     if (soundOn) { unlockAudio(); beep(1, 880, 0.12); }
   });
+  $('recipeCtl').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var id = b.getAttribute('data-id');
+    if (id === recipeId) return;
+    reset();
+    recipeId = id;
+    save('nhm.recipe', id);
+    renderRecipe();
+  });
   $('roastCtl').addEventListener('click', function (e) {
-    var b = e.target.closest('button');
-    if (!b) return;
+    var b = e.target.closest('button'); if (!b) return;
     roast = b.getAttribute('data-r');
+    bean = -1;
     save('nhm.roast', roast);
-    paintRoast();
+    save('nhm.bean', bean);
     renderSteps();
   });
-  function paintRoast() {
-    var bs = $('roastCtl').children;
-    for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', bs[i].getAttribute('data-r') === roast ? 'true' : 'false');
-  }
+  $('beanStrip').addEventListener('click', function (e) {
+    var b = e.target.closest('.lv'); if (!b) return;
+    bean = +b.getAttribute('data-i');
+    roast = BEANS[bean].g;
+    save('nhm.bean', bean);
+    save('nhm.roast', roast);
+    renderSteps();
+  });
+  $('tasteCtl').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    opt.taste = b.getAttribute('data-v');
+    save('nhm.taste', opt.taste);
+    renderSteps();
+  });
+  $('strengthCtl').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (running || elapsed > 0) reset();
+    opt.strength = +b.getAttribute('data-v');
+    save('nhm.strength', opt.strength);
+    renderSteps();
+  });
+  $('refBox').open = load('nhm.refOpen', '0') === '1';
+  $('refBox').addEventListener('toggle', function () { save('nhm.refOpen', $('refBox').open ? '1' : '0'); });
   $('minus').addEventListener('click', function () { if (dose > 10) { dose--; save('nhm.dose', dose); renderSteps(); } });
   $('plus').addEventListener('click', function () { if (dose < 40) { dose++; save('nhm.dose', dose); renderSteps(); } });
 
-  buildBar();
-  paintRoast();
+  buildRecipeCtl();
+  buildRef();
   paintSound();
-  renderSteps();
+  renderRecipe();
 
   // オフラインでも開けるように Service Worker を登録(https か localhost のときだけ動く)
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
