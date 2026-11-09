@@ -1,0 +1,386 @@
+<title>ニューハイブリッドメソッド</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: 1カラムのレシピカード。上から 設定 → 時間軸 → 手順 → 考え方 の順。
+   緑青=透過(スイッチOPEN)、琥珀=浸漬(スイッチCLOSE)で状態を色分け */
+:root {
+  --bg: #F2F4F3;
+  --surface: #FFFFFF;
+  --ink: #18221F;
+  --muted: #566661;
+  --line: #D3DBD8;
+  --flow: #0B7268;
+  --flow-bg: #DCEFEC;
+  --steep: #96561A;
+  --steep-bg: #F5E5D0;
+  --on-solid: #FFFFFF;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1412;
+    --surface: #161F1C;
+    --ink: #E5EEEB;
+    --muted: #9AABA5;
+    --line: #2A3834;
+    --flow: #4CC2B5;
+    --flow-bg: #12302C;
+    --steep: #E2A45E;
+    --steep-bg: #35271A;
+    --on-solid: #0E1412;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1412;
+  --surface: #161F1C;
+  --ink: #E5EEEB;
+  --muted: #9AABA5;
+  --line: #2A3834;
+  --flow: #4CC2B5;
+  --flow-bg: #12302C;
+  --steep: #E2A45E;
+  --steep-bg: #35271A;
+  --on-solid: #0E1412;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 640px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: 30px; line-height: 1.25; font-weight: 900; letter-spacing: 0.01em; text-wrap: balance; }
+h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* header */
+header { display: flex; flex-direction: column; gap: 12px; }
+.byline { font-size: 13px; color: var(--muted); }
+.spec { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 4px 0 0; padding: 0; }
+.spec li { border: 1px solid var(--line); background: var(--surface); padding: 3px 10px; font-size: 13px; border-radius: 4px; }
+.spec .num { font-size: 13px; }
+
+/* dose */
+.dose {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 20px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px;
+}
+.dose-label { font-size: 13px; color: var(--muted); }
+.stepper { display: flex; align-items: center; gap: 4px; }
+.stepper button {
+  width: 44px; height: 44px; font-size: 20px; line-height: 1; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); border-radius: 6px; cursor: pointer; font-family: var(--font-num);
+}
+.stepper output { min-width: 84px; text-align: center; font-size: 26px; font-weight: 600; }
+.stepper output small { font-size: 14px; color: var(--muted); margin-left: 2px; }
+.dose-total { font-size: 14px; color: var(--muted); }
+.dose-total b { color: var(--ink); font-size: 18px; font-weight: 600; }
+button:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
+
+/* roast */
+.roast { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.seg-ctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.seg-ctl button { height: 44px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px; font-family: var(--font-body); font-weight: 700; font-size: 14px; cursor: pointer; }
+.seg-ctl button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.temps { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 14px; color: var(--muted); }
+.temps b { color: var(--ink); font-size: 22px; font-weight: 600; margin-left: 6px; }
+
+/* timeline */
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.bar { position: relative; display: flex; gap: 2px; height: 34px; }
+.seg { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--on-solid); min-width: 0; overflow: hidden; }
+.seg.open { background: var(--flow); }
+.seg.close { background: var(--steep); }
+.seg:first-child { border-radius: 5px 0 0 5px; }
+.seg:last-child { border-radius: 0 5px 5px 0; }
+.marker { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--ink); left: 0; transition: left 0.25s linear; pointer-events: none; }
+.ticks { position: relative; height: 16px; font-size: 11px; color: var(--muted); }
+.ticks span { position: absolute; transform: translateX(-50%); font-family: var(--font-num); }
+.ticks span:first-child { transform: none; }
+.ticks span:last-child { transform: translateX(-100%); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.legend .f { background: var(--flow); }
+.legend .s { background: var(--steep); }
+
+/* timer */
+.timer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.clock { font-size: 34px; font-weight: 600; min-width: 100px; }
+.btn {
+  height: 44px; padding: 0 20px; border-radius: 6px; border: 1px solid var(--ink); background: var(--ink);
+  color: var(--bg); font-family: var(--font-body); font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+
+/* steps */
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.step {
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-left-width: 6px; border-radius: 8px;
+  padding: 14px 16px 14px 14px;
+}
+.step.open { border-left-color: var(--flow); }
+.step.close { border-left-color: var(--steep); }
+.step.active { outline: 2px solid var(--ink); outline-offset: 2px; }
+.step.done { opacity: 0.55; }
+.when { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.state { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 3px; letter-spacing: 0.04em; }
+.step.open .state { background: var(--flow-bg); color: var(--flow); }
+.step.close .state { background: var(--steep-bg); color: var(--steep); }
+.body { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.body h3 { font-size: 16px; font-weight: 700; }
+.amount { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.amount .big { font-size: 28px; font-weight: 600; line-height: 1.2; }
+.amount .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.amount .diff { font-size: 13px; color: var(--muted); }
+.temp { font-size: 13px; font-weight: 700; }
+.step.open .temp { color: var(--flow); }
+.step.close .temp { color: var(--steep); }
+.body p { font-size: 14px; color: var(--muted); }
+
+/* notes */
+.notes { display: flex; flex-direction: column; gap: 12px; }
+.idea { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--line); }
+.idea b { font-size: 14px; }
+.idea.f b { color: var(--flow); }
+.idea.s b { color: var(--steep); }
+.idea span { font-size: 14px; }
+.caveat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
+.caveat ul { margin: 0; padding-left: 1.2em; }
+.src { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.src a { color: var(--ink); text-underline-offset: 3px; }
+section { display: flex; flex-direction: column; gap: 12px; }
+
+@media (max-width: 420px) {
+  h1 { font-size: 26px; }
+  .step { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
+  .when { font-size: 19px; }
+  .idea { grid-template-columns: 1fr; gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { .marker { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="byline">粕谷哲さん考案 / HARIOスイッチで淹れる</p>
+    <h1>ニューハイブリッドメソッド</h1>
+    <ul class="spec">
+      <li>粉 <span class="num">20g</span>(中挽き)</li>
+      <li>お湯 <span class="num">300g</span></li>
+      <li>比率 <span class="num">1:15</span></li>
+      <li>所要 約<span class="num">3:30</span></li>
+    </ul>
+  </header>
+
+  <section aria-labelledby="h-dose">
+    <h2 id="h-dose">粉の量を変える</h2>
+    <div class="dose">
+      <div class="stepper">
+        <button type="button" id="minus" aria-label="粉を1g減らす">−</button>
+        <output id="doseOut" class="num" for="minus plus">20<small>g</small></output>
+        <button type="button" id="plus" aria-label="粉を1g増やす">+</button>
+      </div>
+      <p class="dose-total">お湯の合計 <b class="num" id="totalOut">300g</b></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-roast">
+    <h2 id="h-roast">焙煎度で湯温を変える</h2>
+    <div class="roast">
+      <div class="seg-ctl" id="roastCtl">
+        <button type="button" data-r="light" aria-pressed="false">浅煎り</button>
+        <button type="button" data-r="medium" aria-pressed="true">中煎り</button>
+        <button type="button" data-r="dark" aria-pressed="false">深煎り</button>
+      </div>
+      <div class="temps">
+        <span>透過の湯温<b class="num" id="hiOut">88℃</b></span>
+        <span>最後の浸漬<b class="num" id="loOut">75℃</b></span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-time">
+    <h2 id="h-time">時間の流れ</h2>
+    <div class="timeline">
+      <div class="bar" id="bar" role="img" aria-label="0:00から3:30までのスイッチ開閉の流れ"></div>
+      <div class="ticks" id="ticks" aria-hidden="true"></div>
+      <div class="legend">
+        <span><i class="f"></i>スイッチ OPEN(透過)</span>
+        <span><i class="s"></i>スイッチ CLOSE(浸漬)</span>
+      </div>
+    </div>
+    <div class="timer">
+      <div class="clock num" id="clock" aria-live="off">0:00</div>
+      <button type="button" class="btn" id="startBtn" aria-pressed="false">スタート</button>
+      <button type="button" class="btn ghost" id="resetBtn">リセット</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-steps">
+    <h2 id="h-steps">手順</h2>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section aria-labelledby="h-why">
+    <h2 id="h-why">この順番にする理由</h2>
+    <div class="notes">
+      <div class="idea s"><b>最初は浸漬</b><span>湯を落とさず蒸らして、成分が出やすい状態をつくる。</span></div>
+      <div class="idea f"><b>次に透過</b><span>スイッチを開けて、成分をしっかり引き出す。</span></div>
+      <div class="idea s"><b>最後は浸漬</b><span>雑味が出やすい後半は、湯温を下げて閉じる。</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-memo">
+    <h2 id="h-memo">メモ</h2>
+    <div class="caveat">
+      <ul>
+        <li>1:30の注湯の間に、ケトルへ水を足して湯温を下げる。ここが一番あわただしい。</li>
+        <li>透過の湯温は、粕谷さんが示した焙煎度別の目安(浅煎り93℃前後、中煎り88℃前後、深煎り83℃前後)を使っている。元のレシピは約90℃。</li>
+        <li>最後の浸漬の湯温は、元レシピの70〜80℃の範囲を、焙煎度に合わせてこのページで割り振った目安(浅80℃、中75℃、深70℃)。粕谷さんの指定ではない。</li>
+        <li>最初の蒸らしは記事によって40秒と45秒の表記がある。このページは45秒にしている。</li>
+        <li>粉の量を変えると、注ぐ量は粉量の2倍、6倍、10倍、15倍で計算する。</li>
+        <li>粕谷さんの動画を見た人の解説記事をもとにまとめたもの。細かい数値は動画で確認する。</li>
+        <li>動画の元祖ハイブリッドは透過から始めるレシピで、フルーティさ重視。こちらは甘み重視。</li>
+      </ul>
+    </div>
+    <p class="src">
+      出典:
+      <a href="https://coffeebeats-life.com/new_hybridmethod/" target="_blank" rel="noopener">Coffee Beats! ニューハイブリッドメソッド解説</a>
+      <a href="https://waves-coffee.com/hybridmethod/1319/" target="_blank" rel="noopener">WAVES COFFEE ハイブリッドメソッド</a>
+      <a href="https://note.com/koukiukinko/n/n793dee2bdcfc" target="_blank" rel="noopener">コウキュウキンコ(note) 元祖との比較</a>
+      <a href="https://dime.jp/genre/1310283/" target="_blank" rel="noopener">DIME 粕谷さんの焙煎度別の湯温</a>
+    </p>
+  </section>
+</div>
+
+<script>
+(function () {
+  var STEPS = [
+    { t: 0,   state: 'close', name: '蒸らし',     k: 2,  temp: 'hi',   note: '全体が浸る程度まで注いで、そのまま待つ。' },
+    { t: 45,  state: 'open',  name: '透過 前半',  k: 6,  temp: 'hi',   note: 'スイッチを開けて、全体の40%まで注ぐ。' },
+    { t: 90,  state: 'open',  name: '透過 後半',  k: 10, temp: 'hi',   note: '開けたまま注ぐ。この間にケトルへ水を足して{lo}まで下げる。' },
+    { t: 130, state: 'close', name: '低温で浸漬', k: 15, temp: 'lo',   note: 'スイッチを閉じて、下げた湯で最後まで注ぐ。' },
+    { t: 165, state: 'open',  name: '落とす',     k: null, temp: '',      note: 'スイッチを開けて、落ちきったら完了。' }
+  ];
+  var END = 210;
+  var dose = 20;
+  var roast = 'medium';
+  var ROAST = { light: { hi: 93, lo: 80 }, medium: { hi: 88, lo: 75 }, dark: { hi: 83, lo: 70 } };
+  function tempText(k) {
+    var r = ROAST[roast];
+    return k === 'hi' ? '約' + r.hi + '℃' : r.lo + '℃前後';
+  }
+  var elapsed = 0, running = false, startedAt = 0, timerId = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var stepsEl = $('steps'), barEl = $('bar'), ticksEl = $('ticks');
+
+  function fmt(s) {
+    s = Math.floor(s);
+    return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+  }
+
+  function buildBar() {
+    var html = '';
+    STEPS.forEach(function (s, i) {
+      var end = i + 1 < STEPS.length ? STEPS[i + 1].t : END;
+      var w = ((end - s.t) / END) * 100;
+      html += '<div class="seg ' + s.state + '" style="flex:' + w + ' 1 0">' + (s.state === 'open' ? 'OPEN' : 'CLOSE') + '</div>';
+    });
+    html += '<div class="marker" id="marker"></div>';
+    barEl.innerHTML = html;
+    var th = '';
+    STEPS.forEach(function (s) {
+      th += '<span style="left:' + (s.t / END) * 100 + '%">' + fmt(s.t) + '</span>';
+    });
+    th += '<span style="left:100%">' + fmt(END) + '</span>';
+    ticksEl.innerHTML = th;
+  }
+
+  function renderSteps() {
+    var html = '';
+    STEPS.forEach(function (s, i) {
+      var amt;
+      if (s.k) {
+        var cum = s.k * dose;
+        var prev = i > 0 && STEPS[i - 1].k ? STEPS[i - 1].k * dose : 0;
+        amt = '<div class="amount"><span class="big num">' + cum + '<small>g まで</small></span>' +
+              '<span class="diff num">+' + (cum - prev) + 'g</span></div>';
+      } else {
+        amt = '<div class="amount"><span class="big" style="font-size:20px">落ちきるまで待つ</span></div>';
+      }
+      html += '<li class="step ' + s.state + '" data-i="' + i + '">' +
+        '<div><div class="when num">' + fmt(s.t) + '</div><span class="state">' + (s.state === 'open' ? 'OPEN' : 'CLOSE') + '</span></div>' +
+        '<div class="body"><h3>' + s.name + '</h3>' + amt +
+        (s.temp ? '<div class="temp">湯温 ' + tempText(s.temp) + '</div>' : '') +
+        '<p>' + s.note.replace('{lo}', tempText('lo')) + '</p></div></li>';
+    });
+    stepsEl.innerHTML = html;
+    $('doseOut').innerHTML = dose + '<small>g</small>';
+    $('totalOut').textContent = (15 * dose) + 'g';
+    $('hiOut').textContent = ROAST[roast].hi + '℃';
+    $('loOut').textContent = ROAST[roast].lo + '℃';
+    paintProgress();
+  }
+
+  function paintProgress() {
+    var idx = -1;
+    for (var i = 0; i < STEPS.length; i++) { if (elapsed >= STEPS[i].t) idx = i; }
+    var show = running || elapsed > 0;
+    var items = stepsEl.children;
+    for (var j = 0; j < items.length; j++) {
+      items[j].classList.toggle('active', show && j === idx && elapsed < END);
+      items[j].classList.toggle('done', show && j < idx);
+    }
+    var m = $('marker');
+    if (m) m.style.left = (Math.min(elapsed, END) / END) * 100 + '%';
+    $('clock').textContent = fmt(elapsed);
+  }
+
+  function tick() {
+    elapsed = (Date.now() - startedAt) / 1000;
+    if (elapsed >= END + 60) { stop(); }
+    paintProgress();
+  }
+  function start() {
+    running = true;
+    startedAt = Date.now() - elapsed * 1000;
+    timerId = setInterval(tick, 250);
+    $('startBtn').textContent = '一時停止';
+    $('startBtn').setAttribute('aria-pressed', 'true');
+  }
+  function stop() {
+    running = false;
+    clearInterval(timerId);
+    $('startBtn').textContent = elapsed > 0 ? '再開' : 'スタート';
+    $('startBtn').setAttribute('aria-pressed', 'false');
+  }
+
+  $('startBtn').addEventListener('click', function () { running ? stop() : start(); });
+  $('resetBtn').addEventListener('click', function () { stop(); elapsed = 0; $('startBtn').textContent = 'スタート'; paintProgress(); });
+  $('roastCtl').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    roast = b.getAttribute('data-r');
+    var bs = $('roastCtl').children;
+    for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', bs[i] === b ? 'true' : 'false');
+    renderSteps();
+  });
+  $('minus').addEventListener('click', function () { if (dose > 10) { dose--; renderSteps(); } });
+  $('plus').addEventListener('click', function () { if (dose < 40) { dose++; renderSteps(); } });
+
+  buildBar();
+  renderSteps();
+})();
+</script>
