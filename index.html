@@ -1,5 +1,16 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ニューハイブリッドメソッド</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#F2F4F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1412" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ハイブリッド">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
 <style>
 /* Layout: 1カラムのレシピカード。上から 設定 → 時間軸 → 手順 → 考え方 の順。
@@ -122,6 +133,7 @@ button:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
   color: var(--bg); font-family: var(--font-body); font-weight: 700; font-size: 15px; cursor: pointer;
 }
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.timer-note { font-size: 13px; color: var(--muted); min-height: 1.7em; }
 
 /* steps */
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -224,7 +236,9 @@ section { display: flex; flex-direction: column; gap: 12px; }
       <div class="clock num" id="clock" aria-live="off">0:00</div>
       <button type="button" class="btn" id="startBtn" aria-pressed="false">スタート</button>
       <button type="button" class="btn ghost" id="resetBtn">リセット</button>
+      <button type="button" class="btn ghost" id="soundBtn">音 ON</button>
     </div>
+    <p class="timer-note" id="timerNote" aria-live="polite"></p>
   </section>
 
   <section aria-labelledby="h-steps">
@@ -246,6 +260,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <div class="caveat">
       <ul>
         <li>1:30の注湯の間に、ケトルへ水を足して湯温を下げる。ここが一番あわただしい。</li>
+        <li>タイマー中は、手順が切り替わるたびに短い音が2回、3:30で3回鳴る。iPhoneは消音モードだと鳴らない。</li>
         <li>透過の湯温は、粕谷さんが示した焙煎度別の目安(浅煎り93℃前後、中煎り88℃前後、深煎り83℃前後)を使っている。元のレシピは約90℃。</li>
         <li>最後の浸漬の湯温は、元レシピの70〜80℃の範囲を、焙煎度に合わせてこのページで割り振った目安(浅80℃、中75℃、深70℃)。粕谷さんの指定ではない。</li>
         <li>最初の蒸らしは記事によって40秒と45秒の表記がある。このページは45秒にしている。</li>
@@ -274,14 +289,26 @@ section { display: flex; flex-direction: column; gap: 12px; }
     { t: 165, state: 'open',  name: '落とす',     k: null, temp: '',      note: 'スイッチを開けて、落ちきったら完了。' }
   ];
   var END = 210;
-  var dose = 20;
-  var roast = 'medium';
   var ROAST = { light: { hi: 93, lo: 80 }, medium: { hi: 88, lo: 75 }, dark: { hi: 83, lo: 70 } };
+
+  // 設定は端末内(localStorage)に保存。使えない環境でも初期値で動く
+  function load(key, def) {
+    try { var v = window.localStorage.getItem(key); return v === null ? def : v; } catch (e) { return def; }
+  }
+  function save(key, val) {
+    try { window.localStorage.setItem(key, String(val)); } catch (e) {}
+  }
+  var dose = parseInt(load('nhm.dose', '20'), 10);
+  if (!(dose >= 10 && dose <= 40)) dose = 20;
+  var roast = load('nhm.roast', 'medium');
+  if (!ROAST[roast]) roast = 'medium';
+  var soundOn = load('nhm.sound', '1') === '1';
   function tempText(k) {
     var r = ROAST[roast];
     return k === 'hi' ? '約' + r.hi + '℃' : r.lo + '℃前後';
   }
   var elapsed = 0, running = false, startedAt = 0, timerId = null;
+  var lastIdx = -1, endPlayed = false;
 
   var $ = function (id) { return document.getElementById(id); };
   var stepsEl = $('steps'), barEl = $('bar'), ticksEl = $('ticks');
@@ -334,9 +361,14 @@ section { display: flex; flex-direction: column; gap: 12px; }
     paintProgress();
   }
 
-  function paintProgress() {
+  function currentIdx() {
     var idx = -1;
     for (var i = 0; i < STEPS.length; i++) { if (elapsed >= STEPS[i].t) idx = i; }
+    return idx;
+  }
+
+  function paintProgress() {
+    var idx = currentIdx();
     var show = running || elapsed > 0;
     var items = stepsEl.children;
     for (var j = 0; j < items.length; j++) {
@@ -348,39 +380,113 @@ section { display: flex; flex-direction: column; gap: 12px; }
     $('clock').textContent = fmt(elapsed);
   }
 
+  // 音: iPhone Safari はタップ操作の中で AudioContext を作る/再開する必要がある
+  var actx = null;
+  function unlockAudio() {
+    if (!actx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      actx = new AC();
+    }
+    if (actx.state === 'suspended') actx.resume();
+  }
+  function beep(times, freq, len) {
+    if (!soundOn || !actx) return;
+    var t0 = actx.currentTime + 0.02;
+    for (var i = 0; i < times; i++) {
+      var s = t0 + i * (len + 0.12);
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.4, s + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + len);
+      o.connect(g);
+      g.connect(actx.destination);
+      o.start(s);
+      o.stop(s + len + 0.02);
+    }
+  }
+  function paintSound() { $('soundBtn').textContent = soundOn ? '音 ON' : '音 OFF'; }
+
+  // 画面スリープ防止: タイマー中だけ Wake Lock を取る。アプリを離れると外れるので戻ったら取り直す
+  var wakeLock = null;
+  function note(text) { $('timerNote').textContent = text; }
+  function lockScreen() {
+    if (!('wakeLock' in navigator)) { note('この端末では画面の自動ロックを止められない。'); return; }
+    navigator.wakeLock.request('screen').then(function (l) {
+      wakeLock = l;
+      note('タイマー中は画面を消さない。');
+      l.addEventListener('release', function () { if (wakeLock === l) wakeLock = null; });
+    }).catch(function () { note('画面の自動ロックを止められなかった。'); });
+  }
+  function unlockScreen() {
+    if (wakeLock) { wakeLock.release().catch(function () {}); wakeLock = null; }
+    note('');
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (running && document.visibilityState === 'visible' && !wakeLock) lockScreen();
+  });
+
   function tick() {
     elapsed = (Date.now() - startedAt) / 1000;
+    var idx = currentIdx();
+    if (idx > lastIdx && lastIdx >= 0) beep(2, 880, 0.15);
+    lastIdx = idx;
+    if (!endPlayed && elapsed >= END) { endPlayed = true; beep(3, 660, 0.25); }
     if (elapsed >= END + 60) { stop(); }
     paintProgress();
   }
   function start() {
+    unlockAudio();
     running = true;
     startedAt = Date.now() - elapsed * 1000;
+    lastIdx = currentIdx();
+    endPlayed = elapsed >= END;
     timerId = setInterval(tick, 250);
+    lockScreen();
     $('startBtn').textContent = '一時停止';
     $('startBtn').setAttribute('aria-pressed', 'true');
   }
   function stop() {
     running = false;
     clearInterval(timerId);
+    unlockScreen();
     $('startBtn').textContent = elapsed > 0 ? '再開' : 'スタート';
     $('startBtn').setAttribute('aria-pressed', 'false');
   }
 
   $('startBtn').addEventListener('click', function () { running ? stop() : start(); });
-  $('resetBtn').addEventListener('click', function () { stop(); elapsed = 0; $('startBtn').textContent = 'スタート'; paintProgress(); });
+  $('resetBtn').addEventListener('click', function () { stop(); elapsed = 0; lastIdx = -1; endPlayed = false; $('startBtn').textContent = 'スタート'; paintProgress(); });
+  $('soundBtn').addEventListener('click', function () {
+    soundOn = !soundOn;
+    save('nhm.sound', soundOn ? '1' : '0');
+    paintSound();
+    if (soundOn) { unlockAudio(); beep(1, 880, 0.12); }
+  });
   $('roastCtl').addEventListener('click', function (e) {
     var b = e.target.closest('button');
     if (!b) return;
     roast = b.getAttribute('data-r');
-    var bs = $('roastCtl').children;
-    for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', bs[i] === b ? 'true' : 'false');
+    save('nhm.roast', roast);
+    paintRoast();
     renderSteps();
   });
-  $('minus').addEventListener('click', function () { if (dose > 10) { dose--; renderSteps(); } });
-  $('plus').addEventListener('click', function () { if (dose < 40) { dose++; renderSteps(); } });
+  function paintRoast() {
+    var bs = $('roastCtl').children;
+    for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', bs[i].getAttribute('data-r') === roast ? 'true' : 'false');
+  }
+  $('minus').addEventListener('click', function () { if (dose > 10) { dose--; save('nhm.dose', dose); renderSteps(); } });
+  $('plus').addEventListener('click', function () { if (dose < 40) { dose++; save('nhm.dose', dose); renderSteps(); } });
 
   buildBar();
+  paintRoast();
+  paintSound();
   renderSteps();
+
+  // オフラインでも開けるように Service Worker を登録(https か localhost のときだけ動く)
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
 })();
 </script>
