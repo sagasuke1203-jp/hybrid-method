@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
 <style>
 /* Layout: 1カラムのレシピカード。上から レシピ選択 → 設定 → 時間軸 → 手順 → 考え方 の順。
@@ -79,8 +80,16 @@ h1 { font-size: 30px; line-height: 1.25; font-weight: 900; letter-spacing: 0.01e
 h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 
+/* hot / ice tabs */
+.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--surface); }
+.tabs button {
+  height: 44px; border: 0; border-radius: 6px; background: transparent; color: var(--muted);
+  font-family: var(--font-body); font-weight: 700; font-size: 16px; cursor: pointer;
+}
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+
 /* recipe picker */
-.recipes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.recipes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .recipes button {
   min-height: 52px; padding: 6px 4px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
   border-radius: 6px; font-family: var(--font-body); font-weight: 700; font-size: 13px; line-height: 1.3; cursor: pointer;
@@ -207,6 +216,7 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); ou
 .step.active { outline: 2px solid var(--ink); outline-offset: 2px; }
 .step.done { opacity: 0.55; }
 .when { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.when.long { font-size: 16px; }
 .state { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 3px; letter-spacing: 0.04em; }
 .step.open .state { background: var(--flow-bg); color: var(--flow); }
 .step.close .state { background: var(--steep-bg); color: var(--steep); }
@@ -216,6 +226,9 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); ou
 .amount .big { font-size: 28px; font-weight: 600; line-height: 1.2; }
 .amount .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
 .amount .big.wait { font-size: 20px; }
+.amount.items { gap: 4px 18px; }
+.amount.items .big { font-size: 24px; }
+.amount.items .big small { margin-right: 4px; }
 .amount .diff { font-size: 13px; color: var(--muted); }
 .temp { font-size: 13px; font-weight: 700; }
 .step.open .temp { color: var(--flow); }
@@ -237,6 +250,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
 
 @media (max-width: 480px) {
   .recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .recipes button:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .bean-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .grind-list li { grid-template-columns: 60px minmax(0, 1fr); }
   .grind-list svg { width: 60px; height: 40px; }
@@ -252,9 +266,14 @@ section { display: flex; flex-direction: column; gap: 12px; }
 </style>
 
 <div class="wrap">
+  <div class="tabs" role="tablist" aria-label="ホットとアイス" id="tabCtl">
+    <button type="button" role="tab" id="tab-hot" data-k="hot" aria-selected="true" aria-controls="recipeCtl">ホット</button>
+    <button type="button" role="tab" id="tab-ice" data-k="ice" aria-selected="false" aria-controls="recipeCtl">アイス</button>
+  </div>
+
   <section aria-labelledby="h-recipe">
     <h2 id="h-recipe">レシピ</h2>
-    <div class="recipes" id="recipeCtl"></div>
+    <div class="recipes" id="recipeCtl" role="tabpanel"></div>
   </section>
 
   <header>
@@ -267,11 +286,11 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <h2 id="h-dose">粉の量を変える</h2>
     <div class="dose">
       <div class="stepper">
-        <button type="button" id="minus" aria-label="粉を1g減らす">−</button>
+        <button type="button" id="minus" aria-label="粉を減らす">−</button>
         <output id="doseOut" class="num" for="minus plus">20<small>g</small></output>
-        <button type="button" id="plus" aria-label="粉を1g増やす">+</button>
+        <button type="button" id="plus" aria-label="粉を増やす">+</button>
       </div>
-      <p class="dose-total">お湯の合計 <b class="num" id="totalOut">300g</b></p>
+      <p class="dose-total"><span id="totalLabel">お湯の合計</span> <b class="num" id="totalOut">300g</b></p>
     </div>
   </section>
 
@@ -309,7 +328,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
           <button type="button" data-v="bright" aria-pressed="false">明るめ<small>1投目を多く</small></button>
         </div>
       </div>
-      <div>
+      <div id="strengthBox">
         <p class="opt-label">濃さ(後半6割を注ぐ回数)</p>
         <div class="seg-ctl" id="strengthCtl">
           <button type="button" data-v="1" aria-pressed="false">軽め<small>1回</small></button>
@@ -389,11 +408,18 @@ section { display: flex; flex-direction: column; gap: 12px; }
     impress: ['https://kaden.watch.impress.co.jp/docs/news/1312602.html', '家電Watch MUGENの使い方'],
     harioEu: ['https://hario-europe.com/blogs/hario-community/tetsu-kasuya-introduces-the-mugen-dripper', 'HARIO Europe 粕谷さんによるMUGENの紹介'],
     grind: ['https://coffee-labo.co.jp/pour/', 'coffee-labo 挽き目と砂糖のたとえ'],
-    roast: ['https://coffee-labo.co.jp/frenchroast/', 'coffee-labo 焙煎度とハゼの表']
+    roast: ['https://coffee-labo.co.jp/frenchroast/', 'coffee-labo 焙煎度とハゼの表'],
+    philoCold: ['https://en.philocoffea.com/blogs/blog/cold-ice-brew-coffee-recipe-tips', 'Philocoffea 水出しと氷出しの作り方(粕谷さん名義の記事・英語)'],
+    ytIced: ['https://www.youtube.com/watch?v=TfSBzFeoL4s', '粕谷さんのYouTube「急冷式アイスコーヒー」の作り方(4:6メソッド)'],
+    blogIced: ['https://heibonkun.hatenablog.jp/entry/2023/10/04/212541', 'マッ缶のつぶやき 動画の手順の要約'],
+    jbrcResult: ['https://scaj.org/activity/competitions/jbrc/2026-%E7%AB%B6%E6%8A%80%E7%B5%90%E6%9E%9C', 'SCAJ ジャパン ブリューワーズ カップ 2026 競技結果'],
+    jbrcPhilo: ['https://philocoffea.com/blogs/news/jbrc2026-nagasaki-champion', 'Philocoffea 長崎愛美さんの優勝と使用器具'],
+    jbrcRecipe: ['https://coffee-gear-radar.com/jbrc-2026-manami-nagasaki-seven-pour-recipe/', 'Coffee Gear Radar 決勝配信から起こしたレシピ']
   };
 
   var RECIPES = {
     hybrid: {
+      kind: 'hot',
       label: 'ニューハイブリッド', sub: 'スイッチ',
       title: 'ニューハイブリッドメソッド', byline: '粕谷哲さん考案 / HARIOスイッチで淹れる',
       ratio: 15, end: 210, grind: '中挽き', grindMark: 3, useSwitch: true, tempMode: 'hilo',
@@ -423,9 +449,10 @@ section { display: flex; flex-direction: column; gap: 12px; }
       src: ['beats', 'waves', 'note', 'dime']
     },
     m46: {
+      kind: 'hot',
       label: '4:6メソッド', sub: 'スイッチ開け / V60',
       title: '4:6メソッド', byline: '粕谷哲さん考案 / HARIOスイッチを開けたまま、またはV60で淹れる',
-      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, useSwitch: false, tempMode: 'hi', options: true,
+      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, useSwitch: false, tempMode: 'hi', options: '46',
       steps: function (d, o) {
         var first = Math.round({ sweet: 2.5, std: 3, bright: 3.5 }[o.taste] * d);
         var times = { 1: [90], 2: [90, 135], 3: [90, 135, 165] }[o.strength];
@@ -455,6 +482,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       src: ['philo', 'precious', 'dime']
     },
     sw1: {
+      kind: 'hot',
       label: 'スイッチ一投', sub: '閉じて浸す',
       title: 'スイッチで一投', byline: 'HARIOスイッチの基本の使い方 / 数値はこのページの目安',
       ratio: 15, end: 180, grind: '中挽き', grindMark: 3, useSwitch: true, tempMode: 'hi',
@@ -476,6 +504,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       src: ['bepal', 'dime']
     },
     mugen: {
+      kind: 'hot',
       label: 'MUGEN一投', sub: 'MUGEN',
       title: 'MUGENで一投', byline: 'HARIO公式レシピ / 粕谷さんと共同設計のMUGENドリッパーで淹れる',
       ratio: 12, end: 150, grind: '中挽き', grindMark: 3, useSwitch: false, tempMode: 'fixed', fixedTemp: 91,
@@ -496,9 +525,105 @@ section { display: flex; flex-direction: column; gap: 12px; }
         '注ぐのにかける時間(0:30)は、このページの目安。'
       ],
       src: ['kurasu', 'impress', 'harioEu']
+    },
+    iced46: {
+      kind: 'ice',
+      label: '急冷アイス', sub: '4:6 / 氷に落とす',
+      title: '急冷式アイスコーヒー', byline: '粕谷哲さん考案 / 4:6メソッドのアイス版。スイッチを開けたまま、またはV60で淹れる',
+      ratio: 7.5, serverIce: 4, end: 180, grind: '中挽き', grindMark: 3, useSwitch: false,
+      tempMode: 'fixed', fixedTemp: 90, fixedTempText: '90℃以上', tempNote: '深煎りでも高めが粕谷さんの好み', options: '46i',
+      steps: function (d, o) {
+        var c = function (k) { return Math.round(k * d); };
+        var first = c({ sweet: 1, std: 1.5, bright: 2 }[o.taste]);
+        return [
+          { t: 0,   state: 'open', name: '1投目', cum: first,  temp: 'hi', note: 'サーバーに氷を入れておく。注いだら40秒蒸らす。' },
+          { t: 40,  state: 'open', name: '2投目', cum: c(3),   temp: 'hi', note: '粉が細かめなので、ひと混ぜしてから注ぐ。ここまでで甘さと酸味が決まる。' },
+          { t: 70,  state: 'open', name: '3投目', cum: c(4.5), temp: 'hi', note: '30秒ごとに注ぐ。前の湯が落ちきっていなくてよい。' },
+          { t: 100, state: 'open', name: '4投目', cum: c(6),   temp: 'hi', note: '30秒ごとに注ぐ。' },
+          { t: 130, state: 'open', name: '5投目', cum: c(7.5), temp: 'hi', note: '30秒ごとに注ぐ。' },
+          { t: 180, state: 'open', name: '混ぜて完成', cum: null, temp: '', wait: '落ちきったら混ぜる', note: '3:00で落ちきるのが目安。サーバーを揺すって氷を溶かす。' }
+        ];
+      },
+      why: [
+        ['f', 'お湯は半分', 'ホットの半分の湯量で濃く淹れて、氷で薄まる分を見込む。'],
+        ['f', '氷に直接落とす', 'サーバーの氷ですぐ冷やして、香りを逃がさない。']
+      ],
+      memo: [
+        '粕谷さんのYouTube「急冷式アイスコーヒー」(4:6メソッド)を見た人のブログの要約をもとにしている。細かい数値は動画で確認する。',
+        'お湯はホットの半分(粉20gに150g)を30gずつ5回。サーバーに氷80g(粉量の4倍)を入れておく。',
+        '注ぐ時刻は、ブログの「1投目で40秒蒸らす」「以降は30秒間隔」から決めた目安。',
+        '甘め(1投目20g→2投目40g)と明るめ(40g→20g)は、ブログに書かれていた例。',
+        '溶けにくい純氷(コンビニやスーパーで売っている氷)がいいとされている。'
+      ],
+      src: ['ytIced', 'blogIced', 'philo']
+    },
+    jbrc26: {
+      kind: 'hot',
+      label: 'JBrC 2026', sub: '優勝レシピ / V60',
+      title: 'JBrC 2026 優勝レシピ', byline: '長崎愛美さん(Philocoffea) / ジャパン ブリューワーズ カップ2026決勝 / V60またはスイッチを開けたまま',
+      ratio: 12, end: 180, grind: '粗挽き・約1200μm', grindMark: 4, useSwitch: false,
+      doseDefault: 17.5, doseStep: 0.5,
+      tempMode: 'fixed2', fixedHi: 90, fixedLo: 75, tempNote: '大会のレシピ。焙煎度では変えない',
+      steps: function (d) {
+        var list = [];
+        for (var i = 0; i < 7; i++) {
+          list.push({
+            t: i * 20, state: 'open', name: (i + 1) + '投目', cum: Math.round(d * 12 * (i + 1) / 7), temp: i < 4 ? 'hi' : 'lo',
+            note: i === 0 ? '20秒ごとに同じ量ずつ注ぐ。' :
+                  i === 3 ? '90℃はここまで。次から75℃の湯に切り替える。' :
+                  i === 4 ? '75℃の湯に切り替えて注ぐ。' :
+                  i === 6 ? '注ぎ終わったら、落ちきるまで待つ。' : '20秒ごとに注ぐ。'
+          });
+        }
+        return list;
+      },
+      why: [
+        ['f', '前半4投は90℃', '高めの湯温で、成分をしっかり引き出す。'],
+        ['f', '後半3投は75℃', '湯温を下げて、後半に出やすい雑味を抑える。'],
+        ['f', '7回に分ける', '少量ずつ短い間隔で注ぎ、湯の流れを一定に保つ。']
+      ],
+      memo: [
+        'ジャパン ブリューワーズ カップ2026の決勝(2026年10月17日)で使われたレシピ。豆はコロンビア ラ・ネグリタ農園のゲイシャ(アナエロビックナチュラル、浅煎り)。',
+        '数値は、SCAJ公式の決勝配信をもとにまとめた記事から。注ぐ時刻は「20秒ごと」から決めた目安。',
+        '終わりの時刻は示されていない。3:00はこのページの目安。',
+        '20秒で90℃から75℃に切り替えるので、75℃の湯を別のケトルに用意しておくとよい。',
+        '粒度は約1200μm(ミルはLAGOM 01)。ミルの目盛りの値ではない。',
+        '粉量は0.5g刻みで変えられる。お湯は粉量の12倍を7回に分ける。',
+        '予選は9投で、決勝は豆に合わせて7投にしたとのこと。',
+        '「考え方」は、湯温と注ぎ方からこのページで読み取ったもの。選手本人の説明ではない。'
+      ],
+      src: ['jbrcRecipe', 'jbrcPhilo', 'jbrcResult']
+    },
+    cold: {
+      kind: 'ice',
+      label: '水出し', sub: 'ひと晩浸ける',
+      title: '水出しコーヒー', byline: 'Philocoffea(粕谷さんの店)の作り方 / 浸けてからペーパーでこす',
+      ratio: 14, end: 43200, grind: '粗挽き', grindMark: 4, useSwitch: false,
+      doseDefault: 50, doseMin: 20, doseMax: 100, doseStep: 5,
+      tempMode: 'none', cold: true, noWake: true, finishAt: 36000, timeText: '10〜12時間',
+      labels: { close: '浸ける', open: 'こす' },
+      steps: function (d) {
+        return [
+          { t: 0,     state: 'close', name: '粉を水に浸ける', items: [['粉', d], ['水', 14 * d]], note: '常温の水を使う。浄水だと甘く、すっきりした味になる。' },
+          { t: 60,    state: 'close', name: '置いておく', cum: null, wait: '10〜12時間待つ', note: '10〜12時間がおすすめ。' },
+          { t: 36000, state: 'open',  name: 'こす', cum: null, wait: '12時間までにこす', note: 'ペーパーフィルターでこす。HARIOスイッチは開けたままドリッパーとして使える。' }
+        ];
+      },
+      why: [
+        ['s', '時間で抽出する', 'お湯を使わず、時間をかけて成分を出す。中煎り・深煎りのよさが出やすい。'],
+        ['f', '濃いめに作る', '氷を入れて飲む。濃ければ水や牛乳で割る。']
+      ],
+      memo: [
+        '粉50gに水700g(比率1:14)、10〜12時間。Philocoffeaの記事(粕谷さん名義)の作り方。',
+        '浸けておく場所(冷蔵庫か常温か)は記事に書かれていない。',
+        '残りは冷蔵庫に入れれば、2〜3日は味が落ちにくい。',
+        '中煎りか深煎りの豆が向いているとされている。',
+        '時間が長いので、タイマー中も画面は消してよい。こす時刻(10時間後)を出す。音は画面がついているときだけ鳴る。'
+      ],
+      src: ['philoCold']
     }
   };
-  var ORDER = ['hybrid', 'm46', 'sw1', 'mugen'];
+  var ORDER = ['hybrid', 'm46', 'sw1', 'mugen', 'jbrc26', 'iced46', 'cold'];
   var COMMON_MEMO = 'タイマー中は、手順が切り替わるたびに短い音が2回、終わりの時刻で3回鳴る。iPhoneは消音モードだと鳴らない。';
 
   // ---------- 保存 ----------
@@ -511,8 +636,14 @@ section { display: flex; flex-direction: column; gap: 12px; }
   }
   var recipeId = load('nhm.recipe', 'hybrid');
   if (!RECIPES[recipeId]) recipeId = 'hybrid';
-  var dose = parseInt(load('nhm.dose', '20'), 10);
-  if (!(dose >= 10 && dose <= 40)) dose = 20;
+  var tab = RECIPES[recipeId].kind;
+  // 粉量はレシピごとに保存する。初めて開くレシピは、そのレシピの基準量(なければ前に使っていた量)から始める
+  function loadDose(id) {
+    var r = RECIPES[id], def = r.doseDefault || 20, step = r.doseStep || 1;
+    var v = parseFloat(load('nhm.dose.' + id, r.doseDefault ? String(def) : load('nhm.dose', String(def))));
+    return v >= (r.doseMin || 10) && v <= (r.doseMax || 40) && Math.round(v / step) * step === v ? v : def;
+  }
+  var dose = loadDose(recipeId);
   var roast = load('nhm.roast', 'medium');
   if (!ROAST[roast]) roast = 'medium';
   var bean = parseInt(load('nhm.bean', '-1'), 10);
@@ -532,12 +663,14 @@ section { display: flex; flex-direction: column; gap: 12px; }
 
   function fmt(s) {
     s = Math.floor(s);
-    return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return (h ? h + ':' + ('0' + m).slice(-2) : m) + ':' + ('0' + sec).slice(-2);
   }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
-  function stateLabel(s) { return R.useSwitch ? (s === 'open' ? 'OPEN' : 'CLOSE') : '透過'; }
+  function stateLabel(s) { return R.labels ? R.labels[s] : R.useSwitch ? (s === 'open' ? 'OPEN' : 'CLOSE') : '透過'; }
   function tempText(k) {
-    if (R.tempMode === 'fixed') return R.fixedTemp + '℃';
+    if (R.tempMode === 'fixed') return R.fixedTempText || R.fixedTemp + '℃';
+    if (R.tempMode === 'fixed2') return (k === 'hi' ? R.fixedHi : R.fixedLo) + '℃';
     var r = ROAST[roast];
     return k === 'hi' ? '約' + r.hi + '℃' : r.lo + '℃前後';
   }
@@ -551,6 +684,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     var html = '';
     ORDER.forEach(function (id) {
       var r = RECIPES[id];
+      if (r.kind !== tab) return;
       html += '<button type="button" data-id="' + id + '" aria-pressed="false">' + r.label + '<small>' + r.sub + '</small></button>';
     });
     $('recipeCtl').innerHTML = html;
@@ -569,13 +703,19 @@ section { display: flex; flex-direction: column; gap: 12px; }
     html += '<div class="marker" id="marker"></div>';
     barEl.innerHTML = html;
     barEl.setAttribute('aria-label', '0:00から' + fmt(END) + 'までの流れ');
-    var th = '';
+    // 時間まである長いラベルは幅をとるので、目盛りの間隔を広くとる
+    var th = '', lastPos = -100, gap = END >= 3600 ? 22 : 9;
     STEPS.forEach(function (s) {
-      if (s.t < END) th += '<span style="left:' + (s.t / END) * 100 + '%">' + fmt(s.t) + '</span>';
+      var pos = (s.t / END) * 100;
+      if (s.t >= END || pos - lastPos < gap || 100 - pos < gap) return;
+      th += '<span style="left:' + pos + '%">' + fmt(s.t) + '</span>';
+      lastPos = pos;
     });
     th += '<span style="left:100%">' + fmt(END) + '</span>';
     ticksEl.innerHTML = th;
-    $('legend').innerHTML = R.useSwitch
+    $('legend').innerHTML = R.labels
+      ? '<span><i class="s"></i>' + R.labels.close + '</span><span><i class="f"></i>' + R.labels.open + '</span>'
+      : R.useSwitch
       ? '<span><i class="f"></i>スイッチ OPEN(透過)</span><span><i class="s"></i>スイッチ CLOSE(浸漬)</span>'
       : '<span><i class="f"></i>透過(湯を落としながら淹れる)</span>';
   }
@@ -583,11 +723,16 @@ section { display: flex; flex-direction: column; gap: 12px; }
   function renderRecipe() {
     R = RECIPES[recipeId];
     END = R.end;
+    tab = R.kind;
+    var ts = $('tabCtl').children;
+    for (var i = 0; i < ts.length; i++) ts[i].setAttribute('aria-selected', ts[i].getAttribute('data-k') === tab ? 'true' : 'false');
+    buildRecipeCtl();
     document.title = R.title;
     pressAll('recipeCtl', 'data-id', recipeId);
     $('byline').textContent = R.byline;
     $('title').textContent = R.title;
-    $('optsSec').hidden = !R.options;
+    $('optsSec').hidden = R.options !== '46' && R.options !== '46i';
+    $('strengthBox').hidden = R.options !== '46';
     $('why').innerHTML = R.why.map(function (w) {
       return '<div class="idea ' + w[0] + '"><b>' + w[1] + '</b><span>' + w[2] + '</span></div>';
     }).join('');
@@ -604,37 +749,48 @@ section { display: flex; flex-direction: column; gap: 12px; }
     var html = '', prev = 0;
     STEPS.forEach(function (s, i) {
       var amt;
-      if (s.cum) {
+      if (s.items) {
+        amt = '<div class="amount items">' + s.items.map(function (it) {
+          return '<span class="big num"><small>' + it[0] + '</small>' + it[1] + '<small>g</small></span>';
+        }).join('') + '</div>';
+      } else if (s.cum) {
         amt = '<div class="amount"><span class="big num">' + s.cum + '<small>g まで</small></span>' +
               '<span class="diff num">+' + (s.cum - prev) + 'g</span></div>';
         prev = s.cum;
       } else {
-        amt = '<div class="amount"><span class="big wait">' + (s.t >= END ? '時間になったら外す' : '落ちきるまで待つ') + '</span></div>';
+        amt = '<div class="amount"><span class="big wait">' + (s.wait || (s.t >= END ? '時間になったら外す' : '落ちきるまで待つ')) + '</span></div>';
       }
       html += '<li class="step ' + s.state + '" data-i="' + i + '">' +
-        '<div><div class="when num">' + fmt(s.t) + '</div><span class="state">' + stateLabel(s.state) + '</span></div>' +
+        '<div><div class="when num' + (s.t >= 3600 ? ' long' : '') + '">' + (s.t >= 3600 && s.t % 3600 === 0 ? s.t / 3600 + '時間' : fmt(s.t)) + '</div><span class="state">' + stateLabel(s.state) + '</span></div>' +
         '<div class="body"><h3>' + s.name + '</h3>' + amt +
         (s.temp ? '<div class="temp">湯温 ' + tempText(s.temp) + '</div>' : '') +
         '<p>' + s.note.replace('{lo}', tempText('lo')) + '</p></div></li>';
     });
     stepsEl.innerHTML = html;
 
-    var total = R.ratio * dose;
+    var total = Math.round(R.ratio * dose);
     $('doseOut').innerHTML = dose + '<small>g</small>';
+    $('totalLabel').textContent = R.cold ? '水の合計' : 'お湯の合計';
     $('totalOut').textContent = total + 'g';
     $('spec').innerHTML =
       '<li>粉 <span class="num">' + dose + 'g</span>(' + R.grind + ')</li>' +
-      '<li>お湯 <span class="num">' + total + 'g</span></li>' +
-      '<li>比率 <span class="num">1:' + R.ratio + '</span></li>' +
-      '<li>所要 約<span class="num">' + fmt(END) + '</span></li>';
+      '<li>' + (R.cold ? '水' : 'お湯') + ' <span class="num">' + total + 'g</span></li>' +
+      (R.serverIce ? '<li>氷(サーバー) <span class="num">' + Math.round(R.serverIce * dose) + 'g</span></li>'
+                   : '<li>比率 <span class="num">1:' + R.ratio + '</span></li>') +
+      '<li>所要 約<span class="num">' + (R.timeText || fmt(END)) + '</span></li>';
 
     var r = ROAST[roast];
+    $('h-roast').textContent = R.tempMode === 'hilo' || R.tempMode === 'hi' ? '焙煎度で湯温を変える' : '焙煎度と湯温';
     if (R.tempMode === 'hilo') {
       $('temps').innerHTML = '<span>透過の湯温<b class="num">' + r.hi + '℃</b></span><span>最後の浸漬<b class="num">' + r.lo + '℃</b></span>';
     } else if (R.tempMode === 'hi') {
       $('temps').innerHTML = '<span>湯温<b class="num">' + r.hi + '℃</b></span>';
+    } else if (R.tempMode === 'none') {
+      $('temps').innerHTML = '<span class="fixed">お湯は使わない(常温の水)。中煎り・深煎りが向いている。</span>';
+    } else if (R.tempMode === 'fixed2') {
+      $('temps').innerHTML = '<span>前半の湯温<b class="num">' + R.fixedHi + '℃</b></span><span>後半の湯温<b class="num">' + R.fixedLo + '℃</b></span><span class="fixed">' + R.tempNote + '</span>';
     } else {
-      $('temps').innerHTML = '<span>湯温<b class="num">' + R.fixedTemp + '℃</b></span><span class="fixed">公式の湯温。焙煎度では変えない</span>';
+      $('temps').innerHTML = '<span>湯温<b class="num">' + (R.fixedTempText || R.fixedTemp + '℃') + '</b></span><span class="fixed">' + (R.tempNote || '公式の湯温。焙煎度では変えない') + '</span>';
     }
     pressAll('roastCtl', 'data-r', roast);
     pressAll('tasteCtl', 'data-v', opt.taste);
@@ -750,7 +906,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     note('');
   }
   document.addEventListener('visibilitychange', function () {
-    if (running && document.visibilityState === 'visible' && !wakeLock) lockScreen();
+    if (running && !R.noWake && document.visibilityState === 'visible' && !wakeLock) lockScreen();
   });
 
   // ---------- タイマー ----------
@@ -770,7 +926,12 @@ section { display: flex; flex-direction: column; gap: 12px; }
     lastIdx = currentIdx();
     endPlayed = elapsed >= END;
     timerId = setInterval(tick, 250);
-    lockScreen();
+    if (R.noWake) {
+      var at = new Date(startedAt + (R.finishAt || END) * 1000);
+      note('こす時刻の目安 ' + at.getHours() + ':' + ('0' + at.getMinutes()).slice(-2) + '。画面は消してよい。');
+    } else {
+      lockScreen();
+    }
     $('startBtn').textContent = '一時停止';
     $('startBtn').setAttribute('aria-pressed', 'true');
   }
@@ -796,10 +957,23 @@ section { display: flex; flex-direction: column; gap: 12px; }
     var b = e.target.closest('button'); if (!b) return;
     var id = b.getAttribute('data-id');
     if (id === recipeId) return;
+    selectRecipe(id);
+  });
+  function selectRecipe(id) {
     reset();
     recipeId = id;
     save('nhm.recipe', id);
+    save('nhm.recipe.' + RECIPES[id].kind, id);
+    dose = loadDose(id);
     renderRecipe();
+  }
+  $('tabCtl').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var k = b.getAttribute('data-k');
+    if (k === tab) return;
+    var id = load('nhm.recipe.' + k, '');
+    if (!RECIPES[id] || RECIPES[id].kind !== k) id = ORDER.filter(function (x) { return RECIPES[x].kind === k; })[0];
+    selectRecipe(id);
   });
   $('roastCtl').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
@@ -832,10 +1006,16 @@ section { display: flex; flex-direction: column; gap: 12px; }
   });
   $('refBox').open = load('nhm.refOpen', '0') === '1';
   $('refBox').addEventListener('toggle', function () { save('nhm.refOpen', $('refBox').open ? '1' : '0'); });
-  $('minus').addEventListener('click', function () { if (dose > 10) { dose--; save('nhm.dose', dose); renderSteps(); } });
-  $('plus').addEventListener('click', function () { if (dose < 40) { dose++; save('nhm.dose', dose); renderSteps(); } });
+  function changeDose(dir) {
+    var next = dose + dir * (R.doseStep || 1);
+    if (next < (R.doseMin || 10) || next > (R.doseMax || 40)) return;
+    dose = next;
+    save('nhm.dose.' + recipeId, dose);
+    renderSteps();
+  }
+  $('minus').addEventListener('click', function () { changeDose(-1); });
+  $('plus').addEventListener('click', function () { changeDose(1); });
 
-  buildRecipeCtl();
   buildRef();
   paintSound();
   renderRecipe();
