@@ -81,7 +81,7 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--mut
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 
 /* hot / ice tabs */
-.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--surface); }
+.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--surface); }
 .tabs button {
   height: 44px; border: 0; border-radius: 6px; background: transparent; color: var(--muted);
   font-family: var(--font-body); font-weight: 700; font-size: 16px; cursor: pointer;
@@ -261,6 +261,57 @@ section { display: flex; flex-direction: column; gap: 12px; }
 .mills-note ul { margin: 4px 0 0; padding-left: 1.2em; }
 .view { display: flex; flex-direction: column; gap: 28px; }
 
+/* 2段のタブ: 1段目 レシピ/道具、2段目 その中の切り替え */
+.nav { display: flex; flex-direction: column; gap: 8px; }
+.tabs.sub { border: 0; background: transparent; padding: 0; gap: 6px; }
+.tabs.sub button { height: 38px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; }
+.tabs.sub button[aria-selected="true"] { background: var(--flow-bg); color: var(--flow); border-color: var(--flow); }
+
+/* ミルの換算(道具 > ミルの換算) */
+.mc-conv { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.mc-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.mc-seg button {
+  min-height: 44px; padding: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px;
+  font-family: var(--font-body); font-weight: 700; font-size: 13px; line-height: 1.3; cursor: pointer; white-space: nowrap; letter-spacing: -0.02em;
+}
+.mc-seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.mc-pick { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mc-pick select {
+  font-family: var(--font-num); font-size: 22px; font-weight: 600; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; min-width: 7em; min-height: 48px;
+}
+.mc-pick select:focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; }
+.mc-unit { font-size: 14px; color: var(--muted); }
+.mc-um { font-size: 14px; color: var(--muted); }
+.mc-um b { font-family: var(--font-num); font-size: 18px; color: var(--ink); font-weight: 600; margin-right: 4px; }
+.mc-out { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mc-out div { background: var(--bg); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mc-out .n { font-size: 12px; color: var(--muted); font-weight: 700; }
+.mc-out .x { font-family: var(--font-num); font-size: 30px; font-weight: 600; line-height: 1.2; color: var(--flow); }
+.mc-out .x small { font-family: var(--font-body); font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 3px; }
+.mc-out .w { font-size: 12px; color: var(--steep); }
+.mc-all > summary { cursor: pointer; font-weight: 700; font-size: 14px; padding: 6px 0; }
+.mc-all[open] > summary { margin-bottom: 10px; }
+.mc-tbl { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.mc-tbl table { border-collapse: separate; border-spacing: 0; width: 100%; }
+.mc-tbl th, .mc-tbl td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.mc-tbl tbody tr:last-child td { border-bottom: 0; }
+.mc-tbl thead th {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--surface);
+  font-family: var(--font-body); font-size: 12px; color: var(--muted); font-weight: 700; line-height: 1.35;
+  vertical-align: bottom; border-bottom: 2px solid var(--line); white-space: nowrap;
+}
+.mc-tbl thead th small { display: block; font-weight: 500; font-size: 11px; }
+.mc-tbl th:first-child, .mc-tbl td:first-child { text-align: left; }
+.mc-tbl td.base { font-size: 17px; font-weight: 600; background: var(--bg); }
+.mc-tbl td.um { font-size: 13px; color: var(--muted); }
+.mc-tbl td.um small { display: block; font-family: var(--font-body); font-size: 11px; line-height: 1.3; color: var(--ink); font-weight: 700; }
+.mc-tbl td.v { font-size: 16px; font-weight: 600; }
+.mc-tbl td.edge { color: var(--muted); }
+.mc-tbl tr.band td { border-top: 2px solid var(--line); }
+.mc-notes { font-size: 13px; color: var(--muted); }
+.mc-notes ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }
+
 /* 豆の味の傾向(豆タブ) */
 .bt-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
 .bt-axis { display: flex; flex-direction: column; gap: 6px; }
@@ -316,6 +367,9 @@ section { display: flex; flex-direction: column; gap: 12px; }
 }
 @media (max-width: 420px) {
   h1 { font-size: 26px; }
+  .mc-seg button { font-size: 12px; }
+  .mc-tbl th, .mc-tbl td { padding: 6px; }
+  .mc-tbl thead th { font-size: 11px; letter-spacing: -0.02em; }
   .step { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
   .when { font-size: 19px; }
   .idea { grid-template-columns: 1fr; gap: 2px; }
@@ -324,10 +378,17 @@ section { display: flex; flex-direction: column; gap: 12px; }
 </style>
 
 <div class="wrap">
-  <div class="tabs" role="tablist" aria-label="表示の切り替え" id="tabCtl">
-    <button type="button" role="tab" id="tab-hot" data-k="hot" aria-selected="true" aria-controls="recipeView">ホット</button>
-    <button type="button" role="tab" id="tab-ice" data-k="ice" aria-selected="false" aria-controls="recipeView">アイス</button>
-    <button type="button" role="tab" id="tab-bean" data-k="bean" aria-selected="false" aria-controls="beanView">豆</button>
+  <div class="nav">
+    <div class="tabs" role="tablist" aria-label="レシピと道具" id="areaCtl">
+      <button type="button" role="tab" id="area-recipe" data-a="recipe" aria-selected="true">レシピ</button>
+      <button type="button" role="tab" id="area-tool" data-a="tool" aria-selected="false">道具</button>
+    </div>
+    <div class="tabs sub" role="tablist" aria-label="表示の切り替え" id="tabCtl">
+      <button type="button" role="tab" id="tab-hot" data-k="hot" data-area="recipe" aria-selected="true" aria-controls="recipeView">ホット</button>
+      <button type="button" role="tab" id="tab-ice" data-k="ice" data-area="recipe" aria-selected="false" aria-controls="recipeView">アイス</button>
+      <button type="button" role="tab" id="tab-bean" data-k="bean" data-area="tool" aria-selected="false" aria-controls="beanView" hidden>豆の味</button>
+      <button type="button" role="tab" id="tab-mill" data-k="mill" data-area="tool" aria-selected="false" aria-controls="millView" hidden>ミルの換算</button>
+    </div>
   </div>
 
   <div id="recipeView" class="view">
@@ -464,6 +525,38 @@ section { display: flex; flex-direction: column; gap: 12px; }
     </div>
     <p class="bt-caution">どれも一般的な傾向で、同じ産地・品種でも農園や焙煎所によって味は変わる。数値は仮の値で、飲んだ印象に合わせて data/coffee/ の JSON を直していく前提。レシピの湯温や挽き目は変わらない。</p>
   </div>
+
+  <div id="millView" class="view" hidden>
+    <header>
+      <h1>ミルの換算</h1>
+      <p class="byline">ミルを選んで設定を選ぶと、同じくらいの粒になるほかのミルの設定が出る。どれも目安。</p>
+    </header>
+    <div class="bt-status" id="mcStatus" aria-live="polite">読み込み中…</div>
+    <div class="mc-conv" id="mcPanel" hidden>
+      <div class="bt-axis"><span class="bt-label" id="ml-src">今のミル</span><div class="mc-seg" id="mcSrc" role="group" aria-labelledby="ml-src"></div></div>
+      <div class="bt-axis"><label class="bt-label" for="mcSetting">設定</label><div class="mc-pick"><select id="mcSetting"></select><span class="mc-unit" id="mcUnit"></span></div></div>
+      <p class="mc-um" id="mcUm"></p>
+      <div class="mc-out" id="mcOut" aria-live="polite"></div>
+    </div>
+    <details class="mc-all" id="mcAll" hidden>
+      <summary id="mcAllSum">対応表を全部見る</summary>
+      <div class="mc-tbl"><table><thead><tr id="mcHead"></tr></thead><tbody id="mcRows"></tbody></table></div>
+    </details>
+    <div class="mc-notes">
+      <ul>
+        <li>コマンダンテと C3s は、同じ早見表サイト(Honest Coffee Guide)の抽出方法ごとの「粒の大きさとクリックの範囲」から式を出した。クリックは刃を閉じた位置から数える。</li>
+        <li>ナイスカットGは公開されている目盛りの目安(1 細挽き・3.5 カリタ挽き・4.5 中挽き・8 粗挽き)からの推定。</li>
+        <li>式は data/coffee/grinders.json の scale(粒の大きさ = a × 設定 + b)。直せば換算も変わる。</li>
+      </ul>
+    </div>
+    <p class="bt-caution">刃の形(円錐刃とカット刃)が違うと、同じ粒の大きさでも粉の揃い方が違う。換算はあくまで出発点で、美味しかった設定を実測として残していく前提。</p>
+    <p class="src">
+      <a href="https://honestcoffeeguide.com/coffee-grind-size-chart/">Honest Coffee Guide 挽き目の早見表</a>
+      <a href="https://honestcoffeeguide.com/comandante-c40-mk4-grind-settings/">Honest Coffee Guide コマンダンテ C40 MK4 の挽き目</a>
+      <a href="https://honestcoffeeguide.com/timemore-c3s-grind-settings/">Honest Coffee Guide Timemore C3S の挽き目</a>
+      <a href="https://kakakumag.com/seikatsu-kaden/?id=22507&amp;lid=at_3198">価格.comマガジン ナイスカットG</a>
+    </p>
+  </div>
 </div>
 
 <script src="js/taste.js"></script>
@@ -518,7 +611,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: 'ニューハイブリッド', sub: 'スイッチ',
       title: 'ニューハイブリッドメソッド', byline: '粕谷哲さん考案 / HARIOスイッチで淹れる',
-      ratio: 15, end: 210, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: true, tempMode: 'hilo',
+      ratio: 15, end: 210, grind: '中挽き', grindMark: 3, grindUm: 710, useSwitch: true, tempMode: 'hilo',
       steps: function (d) {
         return [
           { t: 0,   state: 'close', name: '蒸らし',     cum: 2 * d,  temp: 'hi', note: '全体が浸る程度まで注いで、そのまま待つ。' },
@@ -548,7 +641,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: '4:6メソッド', sub: 'スイッチ開け / V60',
       title: '4:6メソッド', byline: '粕谷哲さん考案 / HARIOスイッチを開けたまま、またはV60で淹れる',
-      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, grindUm: 1000, useSwitch: false, tempMode: 'hi', options: '46',
+      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, grindUm: 830, useSwitch: false, tempMode: 'hi', options: '46',
       steps: function (d, o) {
         var first = Math.round({ sweet: 2.5, std: 3, bright: 3.5 }[o.taste] * d);
         var times = { 1: [90], 2: [90, 135], 3: [90, 135, 165] }[o.strength];
@@ -581,7 +674,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: 'スイッチ一投', sub: '閉じて浸す',
       title: 'スイッチで一投', byline: 'HARIOスイッチの基本の使い方 / 数値はこのページの目安',
-      ratio: 15, end: 180, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: true, tempMode: 'hi',
+      ratio: 15, end: 180, grind: '中挽き', grindMark: 3, grindUm: 710, useSwitch: true, tempMode: 'hi',
       steps: function (d) {
         return [
           { t: 0,   state: 'close', name: '全量を注ぐ',   cum: 15 * d, temp: 'hi', note: 'スイッチを閉じて、一度に全部注ぐ。粉がすべて湯に浸るように。' },
@@ -603,7 +696,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: 'MUGEN一投', sub: 'MUGEN',
       title: 'MUGENで一投', byline: 'HARIO公式レシピ / 粕谷さんと共同設計のMUGENドリッパーで淹れる',
-      ratio: 12, end: 150, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: false, tempMode: 'fixed', fixedTemp: 91,
+      ratio: 12, end: 150, grind: '中挽き', grindMark: 3, grindUm: 710, useSwitch: false, tempMode: 'fixed', fixedTemp: 91,
       steps: function (d) {
         return [
           { t: 0,  state: 'open', name: 'ゆっくり注ぐ',   cum: 12 * d, temp: 'hi', note: '中心から渦を描くように、ゆっくり一度に注ぐ。蒸らしはしない。' },
@@ -626,7 +719,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'ice',
       label: '急冷アイス', sub: '4:6 / 氷に落とす',
       title: '急冷式アイスコーヒー', byline: '粕谷哲さん考案 / 4:6メソッドのアイス版。スイッチを開けたまま、またはV60で淹れる',
-      ratio: 7.5, serverIce: 4, end: 180, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: false,
+      ratio: 7.5, serverIce: 4, end: 180, grind: '中挽き', grindMark: 3, grindUm: 710, useSwitch: false,
       tempMode: 'fixed', fixedTemp: 90, fixedTempText: '90℃以上', tempNote: '深煎りでも高めが粕谷さんの好み', options: '46i',
       steps: function (d, o) {
         var c = function (k) { return Math.round(k * d); };
@@ -694,7 +787,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: '山口スペシャル', sub: 'ムゲンスイッチ',
       title: '山口スペシャル', byline: '自分のレシピ / HARIOムゲンスイッチで淹れる',
-      ratio: 230 / 15, end: 160, grind: '中粗挽き', grindMark: 4, grindUm: 1000, useSwitch: true,
+      ratio: 230 / 15, end: 160, grind: '中粗挽き', grindMark: 4, grindUm: 790, useSwitch: true,
       doseDefault: 15, tempMode: 'hilo', fixedLo: 70,
       steps: function (d) {
         return [
@@ -1091,8 +1184,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
   $('tabCtl').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     var k = b.getAttribute('data-k');
-    if (k === 'bean') { if (view !== 'bean') { showView('bean'); window.scrollTo(0, 0); } return; }
-    if (view === 'bean') { showView('recipe'); window.scrollTo(0, 0); }
+    if (k === 'bean' || k === 'mill') { if (view !== k) { showView(k); window.scrollTo(0, 0); } return; }
+    if (view !== 'recipe') { showView('recipe'); window.scrollTo(0, 0); }
     if (k === tab) return;
     var id = load('nhm.recipe.' + k, '');
     if (!RECIPES[id] || RECIPES[id].kind !== k) id = ORDER.filter(function (x) { return RECIPES[x].kind === k; })[0];
@@ -1141,9 +1234,10 @@ section { display: flex; flex-direction: column; gap: 12px; }
 
   // ---------- 手持ちのミルでの目安 ----------
   // ミルは data/coffee/grinders.json(owned: true が手持ち)、実測は calibrations.json。起動時に読み込む。
-  // 換算の中身は js/grind.js。レシピの挽き目の µm は RECIPES の grindUm(仮の値)
+  // 換算の中身は js/grind.js。レシピの粒の大きさ(µm)は RECIPES の grindUm。
+  // 中挽きはナイスカットG 4(実測)、4:6 はコマンダンテ30(公開)、山口スペシャルは C3s 20(実測)を換算式で µm にした値。粗挽きは約1200µm
   var MILLS = null;
-  var KIND_TEXT = { measured: '実測', reference: '目安', rough: 'かなり粗い目安(実測がまだない)', uncalibrated: '未校正(実測がまだない)' };
+  var KIND_TEXT = { measured: '実測', converted: '目安', reference: '目安', rough: 'かなり粗い目安(実測がまだない)', uncalibrated: '未校正(実測がまだない)' };
   function millValue(g, v) { return g.unit === 'dial' ? String(v) : v + 'クリック'; }
   function renderMills() {
     if (!MILLS) return;
@@ -1153,7 +1247,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
     $('millBox').hidden = !owned.length;
     $('millList').innerHTML = owned.map(function (g) {
       var r = Grind.settingFor(recipeId, g, MILLS.calibrations, um);
-      var tag = r.kind === 'relative' ? '目安(' + RECIPES[r.from].title + 'の実測から計算)'
+      var tag = r.kind === 'converted' ? '目安。粒の大きさ約' + r.um + 'µmから換算' + (r.warn === 'coarse' ? '(これより粗くできない)' : r.warn === 'fine' ? '(これより細かくできない)' : '')
+        : r.kind === 'relative' ? '目安(' + RECIPES[r.from].title + 'の実測から計算)'
         : KIND_TEXT[r.kind] + ((r.kind === 'measured' || r.kind === 'reference') && r.note ? '。' + r.note : '');
       return '<li><span class="name">' + esc(g.name) + '</span><span class="val num">' +
         (r.kind === 'uncalibrated' ? '—' : millValue(g, r.value)) + '</span>' +
@@ -1168,6 +1263,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
       var d = { grinders: lists[0], calibrations: lists[1] };
       var errs = Grind.validate(d, ORDER);
       if (errs.length) {
+        MILLS_ERR = ['data/coffee/ のミルの JSON に直すところがある。'].concat(errs);
+        if (view === 'mill') renderMillView();
         $('millBox').hidden = false;
         $('millList').innerHTML = '';
         $('millNote').innerHTML = 'data/coffee/ のミルの JSON に直すところがある。<ul>' +
@@ -1176,13 +1273,105 @@ section { display: flex; flex-direction: column; gap: 12px; }
       }
       MILLS = d;
       renderMills();
-    }).catch(function () { /* 読めなければミルの欄は出さない */ });
+      if (view === 'mill') renderMillView();
+    }).catch(function () {
+      // 読めなければレシピ画面のミルの欄は出さない。換算の画面にはメッセージ
+      MILLS_ERR = ['ミルのデータを読み込めなかった。通信できる場所で開き直してください。'];
+      if (view === 'mill') renderMillView();
+    });
   })();
+
+  // ---------- ミルの換算(道具 > ミルの換算) ----------
+  // grinders.json で scale を持つミルどうしを、粒の大きさ(µm)を介して換算する。式は js/grind.js
+  var MILLS_ERR = null, mcBuilt = false;
+  var MC_ORDER = ['comandante-c40', 'kalita-nicecut-g', 'timemore-c3s'];
+  var MC_BANDS = [[0, '極細挽き'], [200, '細挽き'], [380, '中細挽き'], [600, '中挽き'], [850, '中粗挽き'], [1000, '粗挽き']];
+  var MC_WARN = { fine: 'これより細かくできない', coarse: 'これより粗くできない', unsafe: 'これより細かいと刃を傷めやすい' };
+  function mcBand(um) { var b = MC_BANDS[0][1]; MC_BANDS.forEach(function (x) { if (um >= x[0]) b = x[1]; }); return b; }
+  function mcList() {
+    return MILLS.grinders.filter(function (g) { return g.scale; }).sort(function (a, b) {
+      var ia = MC_ORDER.indexOf(a.id), ib = MC_ORDER.indexOf(b.id);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+  }
+  function mcShort(g) { return g.short || g.name; }
+  function mcSteps(g) {
+    var r = Grind.rangeOf(g), out = [];
+    for (var v = r.min; v <= r.max + 1e-9; v += r.step) out.push(Math.round(v * 10) / 10);
+    return out;
+  }
+  function mcBuild(list) {
+    var src = load('nhm.mill.src', list[0].id);
+    if (!list.some(function (g) { return g.id === src; })) save('nhm.mill.src', list[0].id);
+    $('mcSrc').style.gridTemplateColumns = 'repeat(' + list.length + ', minmax(0, 1fr))';
+    $('mcSrc').innerHTML = list.map(function (g) { return '<button type="button" data-g="' + esc(g.id) + '">' + esc(mcShort(g)) + '</button>'; }).join('');
+    $('mcSrc').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      save('nhm.mill.src', b.getAttribute('data-g'));
+      mcFillSelect(); mcRender();
+    });
+    $('mcSetting').addEventListener('change', function () { save('nhm.mill.v.' + load('nhm.mill.src', ''), $('mcSetting').value); mcRender(); });
+    // 対応表は最初のミル(コマンダンテ)の目盛りを基準に並べる
+    var base = list[0], others = list.slice(1);
+    $('mcAllSum').textContent = '対応表を全部見る(' + mcShort(base) + '基準)';
+    $('mcHead').innerHTML = '<th>' + esc(mcShort(base)) + '<small>' + (base.unit === 'dial' ? 'ダイヤル' : 'クリック') + '</small></th><th>粒の大きさ<small>µm</small></th>' +
+      others.map(function (g) { return '<th>' + esc(mcShort(g)) + '<small>' + (g.unit === 'dial' ? 'ダイヤル' : 'クリック') + '</small></th>'; }).join('');
+    var prev = '';
+    $('mcRows').innerHTML = mcSteps(base).map(function (v) {
+      var um = Grind.umFromSetting(base, v), band = mcBand(Math.max(0, um)), first = band !== prev;
+      var row = '<tr' + (first && prev ? ' class="band"' : '') + '><td class="base">' + v + '</td><td class="um">約' + Math.max(0, Math.round(um / 10) * 10) +
+        (first ? '<small>' + band + '</small>' : '') + '</td>' +
+        others.map(function (g) {
+          var r = Grind.settingFromUm(g, um);
+          return r.warn === 'fine' ? '<td class="v edge">—</td>' : '<td class="v' + (r.warn === 'coarse' ? ' edge' : '') + '">' + r.value + '</td>';
+        }).join('') + '</tr>';
+      prev = band;
+      return row;
+    }).join('');
+  }
+  function mcCurrent(list) {
+    var id = load('nhm.mill.src', list[0].id);
+    return list.filter(function (g) { return g.id === id; })[0] || list[0];
+  }
+  function mcFillSelect() {
+    var list = mcList(), g = mcCurrent(list), steps = mcSteps(g);
+    var cur = parseFloat(load('nhm.mill.v.' + g.id, ''));
+    if (steps.indexOf(cur) < 0) cur = Grind.settingFromUm(g, 700).value; // 初めては中挽きくらい
+    $('mcSetting').innerHTML = steps.map(function (v) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + v + '</option>'; }).join('');
+    $('mcUnit').textContent = g.unit === 'dial' ? '(ダイヤル)' : 'クリック';
+    var bs = $('mcSrc').children;
+    for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', String(bs[i].getAttribute('data-g') === g.id));
+  }
+  function mcRender() {
+    var list = mcList(), g = mcCurrent(list), v = parseFloat($('mcSetting').value), um = Grind.umFromSetting(g, v);
+    $('mcUm').innerHTML = '粒の大きさ <b>' + (um < 0 ? 'ごく細かい' : '約' + Math.round(um / 10) * 10 + 'µm') + '</b>(' + mcBand(Math.max(0, um)) + ')';
+    $('mcOut').innerHTML = list.filter(function (o) { return o.id !== g.id; }).map(function (o) {
+      var r = Grind.settingFromUm(o, um);
+      return '<div><span class="n">' + esc(o.name) + '</span><span class="x">' + r.value + (o.unit === 'dial' ? '' : '<small>クリック</small>') + '</span>' +
+        (r.warn ? '<span class="w">' + MC_WARN[r.warn] + '</span>' : '') + '</div>';
+    }).join('');
+  }
+  function renderMillView() {
+    if (!MILLS) {
+      $('mcStatus').hidden = false;
+      $('mcStatus').innerHTML = MILLS_ERR ? esc(MILLS_ERR[0]) + (MILLS_ERR.length > 1 ? '<ul>' + MILLS_ERR.slice(1, 8).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') : '読み込み中…';
+      return;
+    }
+    var list = mcList();
+    if (list.length < 2) { $('mcStatus').hidden = false; $('mcStatus').textContent = '換算の式(scale)を持つミルが2台以上ない。'; return; }
+    if (!mcBuilt) { mcBuild(list); mcBuilt = true; }
+    $('mcStatus').hidden = true;
+    $('mcPanel').hidden = false;
+    $('mcAll').hidden = false;
+    mcFillSelect();
+    mcRender();
+  }
 
   // ---------- 豆の味の傾向(豆タブ) ----------
   // 計算は js/taste.js、数値と説明は data/coffee/*.json。豆タブを初めて開いたときに読み込む。
   // レシピの湯温や挽き目には反映しない。タイマーは豆タブを見ている間も動き続ける
-  var view = load('nhm.view', 'recipe') === 'bean' ? 'bean' : 'recipe';
+  var view = load('nhm.view', 'recipe');
+  if (view !== 'bean' && view !== 'mill') view = 'recipe';
   var BT = null, btLoading = false;
   var BT_DELTA = [['variety', 'varieties', '品種'], ['process', 'processes', '精製'], ['roast', 'roasts', '焙煎']];
   var BT_RADAR = ['acidity', 'aroma', 'sweetness', 'body', 'bitterness']; // 似た指標が隣り合う並び
@@ -1190,20 +1379,34 @@ section { display: flex; flex-direction: column; gap: 12px; }
     try { var o = JSON.parse(load('nhm.beanSel', '{}')); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; }
   })();
 
+  // タブは2段。1段目はレシピ/道具、2段目はその中(ホット・アイス / 豆の味・ミルの換算)
   function paintTabs() {
-    var cur = view === 'bean' ? 'bean' : tab;
+    var area = view === 'recipe' ? 'recipe' : 'tool', cur = view === 'recipe' ? tab : view, i;
+    var as = $('areaCtl').children;
+    for (i = 0; i < as.length; i++) as[i].setAttribute('aria-selected', as[i].getAttribute('data-a') === area ? 'true' : 'false');
     var ts = $('tabCtl').children;
-    for (var i = 0; i < ts.length; i++) ts[i].setAttribute('aria-selected', ts[i].getAttribute('data-k') === cur ? 'true' : 'false');
+    for (i = 0; i < ts.length; i++) {
+      ts[i].hidden = ts[i].getAttribute('data-area') !== area;
+      ts[i].setAttribute('aria-selected', ts[i].getAttribute('data-k') === cur ? 'true' : 'false');
+    }
   }
   function showView(v) {
     view = v;
     save('nhm.view', v);
-    $('recipeView').hidden = v === 'bean';
+    if (v !== 'recipe') save('nhm.tool', v);
+    $('recipeView').hidden = v !== 'recipe';
     $('beanView').hidden = v !== 'bean';
-    document.title = v === 'bean' ? '豆の味の傾向' : R.title;
+    $('millView').hidden = v !== 'mill';
+    document.title = v === 'bean' ? '豆の味の傾向' : v === 'mill' ? 'ミルの換算' : R.title;
     paintTabs();
     if (v === 'bean') loadBeanData();
+    if (v === 'mill') renderMillView();
   }
+  $('areaCtl').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.getAttribute('data-a') === 'recipe') { if (view !== 'recipe') { showView('recipe'); window.scrollTo(0, 0); } return; }
+    if (view === 'recipe') { showView(load('nhm.tool', 'bean') === 'mill' ? 'mill' : 'bean'); window.scrollTo(0, 0); }
+  });
   function esc(t) {
     return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
   }

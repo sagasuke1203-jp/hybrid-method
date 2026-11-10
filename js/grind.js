@@ -3,7 +3,9 @@
 //
 // 出す順番(上ほど優先):
 //   1. measured     そのレシピ・そのミルの自分の実測(calibrations.json の source が "own" か省略)
-//   2. reference    公開情報から決めた目安(calibrations.json の source が "public")
+//   2. converted    ミルが換算式(grinders.json の scale)を持つとき、レシピの粒の大きさ(µm)から換算
+//   ここから下は換算式のないミルだけ
+//   2'. reference   公開情報から決めた目安(calibrations.json の source が "public")
 //   3. relative     同じミルのほかのレシピの自分の実測から、レシピの µm の差 ÷ 1目盛りの µm で目安を出す
 //   4. rough        実測がないとき、レシピの µm ÷ 1目盛りの µm(最細設定があればそこから)。かなり粗い目安
 //   5. uncalibrated 1目盛りの µm が分からず、使える実測もない
@@ -34,6 +36,11 @@
     var cals = all.filter(function (c) { return c.source !== 'public'; });   // 自分の実測だけ
     var exact = cals.filter(function (c) { return c.recipeId === recipeId; })[0];
     if (exact) return { kind: 'measured', value: exact.setting, note: exact.note || '' };
+    var um0 = recipeUm && recipeUm[recipeId];
+    if (grinder.scale && um0) {
+      var cv = settingFromUm(grinder, um0);
+      return { kind: 'converted', value: cv.value, um: um0, warn: cv.warn };
+    }
     var ref = all.filter(function (c) { return c.source === 'public' && c.recipeId === recipeId; })[0];
     if (ref) return { kind: 'reference', value: ref.setting, note: ref.note || '' };
 
@@ -54,6 +61,23 @@
     return { kind: 'rough', value: snap(grinder, (grinder.finestSetting || 0) + um / per) };
   }
 
+  // ---- 粒の大きさ(µm) ⇄ 設定。grinders.json の scale(µm = a × 設定 + b)を使う ----
+  function rangeOf(g) {
+    if (g.unit === 'dial' && g.dial) return { min: g.dial.min, max: g.dial.max, step: g.dial.step };
+    var r = g.range || {};
+    return { min: r.min !== undefined ? r.min : 1, max: r.max !== undefined ? r.max : 40, step: 1 };
+  }
+  function umFromSetting(g, v) { return g.scale.a * v + g.scale.b; }
+  // 返す warn: 'fine' これより細かくできない / 'coarse' これより粗くできない / 'unsafe' 刃を傷めやすい細かさ
+  function settingFromUm(g, um) {
+    var r = rangeOf(g), raw = (um - g.scale.b) / g.scale.a;
+    var v = Math.round(raw / r.step) * r.step, warn = null;
+    if (v < r.min) { v = r.min; warn = 'fine'; }
+    else if (v > r.max) { v = r.max; warn = 'coarse'; }
+    else if (g.minSafeClicksFromZero && v < g.minSafeClicksFromZero) warn = 'unsafe';
+    return { value: Math.round(v * 10) / 10, warn: warn };
+  }
+
   function validate(data, recipeIds) {
     var errs = [];
     var gs = data.grinders, cs = data.calibrations;
@@ -68,6 +92,7 @@
       if (typeof g.name !== 'string' || !g.name) errs.push(FILES.grinders + ' の ' + g.id + ' に name がない');
       if (g.unit !== 'dial' && g.unit !== 'click') errs.push(FILES.grinders + ' の ' + g.id + ' の unit は dial か click');
       if (g.unit === 'dial' && !(g.dial && g.dial.min < g.dial.max && g.dial.step > 0)) errs.push(FILES.grinders + ' の ' + g.id + ' の dial の min/max/step がおかしい');
+      if (g.scale !== undefined && !(g.scale && typeof g.scale.a === 'number' && g.scale.a > 0 && typeof g.scale.b === 'number')) errs.push(FILES.grinders + ' の ' + g.id + ' の scale は {a: 正の数, b: 数}');
       if (g.umPerStep !== null && g.umPerStep !== undefined && !(typeof g.umPerStep === 'number' && g.umPerStep > 0)) errs.push(FILES.grinders + ' の ' + g.id + ' の umPerStep は正の数か null');
     });
     cs.forEach(function (c, i) {
@@ -82,5 +107,6 @@
     return errs;
   }
 
-  return { FILES: FILES, snap: snap, settingFor: settingFor, validate: validate };
+  return { FILES: FILES, snap: snap, settingFor: settingFor, validate: validate,
+    rangeOf: rangeOf, umFromSetting: umFromSetting, settingFromUm: settingFromUm };
 });
