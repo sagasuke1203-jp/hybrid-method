@@ -559,8 +559,9 @@ section { display: flex; flex-direction: column; gap: 12px; }
   </div>
 </div>
 
-<script src="js/taste.js"></script>
-<script src="js/grind.js"></script>
+<!-- 更新したら ?v= の番号を上げる(古いスクリプトがブラウザのキャッシュから使われないように) -->
+<script src="js/taste.js?v=11"></script>
+<script src="js/grind.js?v=11"></script>
 <script>
 (function () {
   // ---------- データ ----------
@@ -1241,6 +1242,9 @@ section { display: flex; flex-direction: column; gap: 12px; }
   function millValue(g, v) { return g.unit === 'dial' ? String(v) : v + 'クリック'; }
   function renderMills() {
     if (!MILLS) return;
+    try { renderMillsInner(); } catch (e) { $('millBox').hidden = true; }
+  }
+  function renderMillsInner() {
     var um = {};
     ORDER.forEach(function (id) { if (RECIPES[id].grindUm) um[id] = RECIPES[id].grindUm; });
     var owned = MILLS.grinders.filter(function (g) { return g.owned; });
@@ -1258,7 +1262,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
   (function loadMills() {
     if (!window.Grind || !window.fetch || !window.Promise) return;
     Promise.all([Grind.FILES.grinders, Grind.FILES.calibrations].map(function (f) {
-      return fetch('data/coffee/' + f).then(function (r) { if (!r.ok) throw new Error(f); return r.json(); });
+      return fetch('data/coffee/' + f, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(f); return r.json(); });
     })).then(function (lists) {
       var d = { grinders: lists[0], calibrations: lists[1] };
       var errs = Grind.validate(d, ORDER);
@@ -1351,7 +1355,14 @@ section { display: flex; flex-direction: column; gap: 12px; }
         (r.warn ? '<span class="w">' + MC_WARN[r.warn] + '</span>' : '') + '</div>';
     }).join('');
   }
+  var STALE_MSG = '表示できなかった。古いファイルが残っているかもしれないので、アプリを閉じて開き直してください。';
   function renderMillView() {
+    try { renderMillViewInner(); } catch (e) {
+      $('mcStatus').hidden = false; $('mcStatus').textContent = STALE_MSG;
+      $('mcPanel').hidden = true; $('mcAll').hidden = true;
+    }
+  }
+  function renderMillViewInner() {
     if (!MILLS) {
       $('mcStatus').hidden = false;
       $('mcStatus').innerHTML = MILLS_ERR ? esc(MILLS_ERR[0]) + (MILLS_ERR.length > 1 ? '<ul>' + MILLS_ERR.slice(1, 8).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') : '読み込み中…';
@@ -1421,7 +1432,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     btStatus('読み込み中…');
     var keys = Object.keys(Taste.FILES);
     Promise.all(keys.map(function (k) {
-      return fetch('data/coffee/' + Taste.FILES[k]).then(function (r) {
+      return fetch('data/coffee/' + Taste.FILES[k], { cache: 'no-cache' }).then(function (r) {
         if (!r.ok) throw new Error(Taste.FILES[k]);
         return r.json();
       });
@@ -1430,14 +1441,16 @@ section { display: flex; flex-direction: column; gap: 12px; }
       keys.forEach(function (k, i) { d[k] = lists[i]; });
       var errs = Taste.validate(d);
       if (errs.length) { btStatus('data/coffee/ の JSON に直すところがある。', errs.slice(0, 8)); return; }
-      BT = d;
-      btCleanSel();
-      btBuild();
-      btStatus('');
-      $('btPanel').hidden = false;
-      btRender();
+      try {
+        BT = d;
+        btCleanSel();
+        btBuild();
+        btStatus('');
+        $('btPanel').hidden = false;
+        btRender();
+      } catch (e) { BT = null; $('btPanel').hidden = true; btStatus(STALE_MSG); }
     }).catch(function () {
-      btStatus('豆のデータを読み込めなかった。通信できる場所で、もう一度「豆」を押してください。');
+      btStatus('豆のデータを読み込めなかった。通信できる場所で、もう一度「豆の味」を押してください。');
     }).then(function () { btLoading = false; });
   }
   // 保存していた選択のうち、データから消えたものは外す。産地があれば地域は産地に合わせる

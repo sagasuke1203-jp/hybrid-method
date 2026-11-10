@@ -2,7 +2,7 @@
 // 自分のファイルはネット優先(更新がすぐ届く)、つながらないときはキャッシュを使う。
 // Google Fonts はキャッシュ優先。
 // ファイル一覧を変えたときは CACHE の番号を上げる。
-var CACHE = 'nhm-v3';
+var CACHE = 'nhm-v4';
 var SHELL = [
   './',
   'index.html',
@@ -22,7 +22,9 @@ var SHELL = [
 ];
 
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }));
+  e.waitUntil(caches.open(CACHE).then(function (c) {
+    return c.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+  }));
   self.skipWaiting();
 });
 
@@ -41,7 +43,7 @@ self.addEventListener('fetch', function (e) {
 
   if (url.origin === self.location.origin) {
     e.respondWith(
-      fetch(req).then(function (res) {
+      fetch(req, { cache: 'no-cache' }).then(function (res) {
         if (res.ok) {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put(req, copy); });
