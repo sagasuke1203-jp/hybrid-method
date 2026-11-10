@@ -1,0 +1,26 @@
+[
+  {
+    "id": "africa",
+    "name": "アフリカ・中東",
+    "origins": ["ethiopia", "kenya", "rwanda", "burundi", "tanzania", "yemen"],
+    "note": "花や果実の香りと、はっきりした酸味が出やすい地域。"
+  },
+  {
+    "id": "central",
+    "name": "中米",
+    "origins": ["guatemala", "elsalvador", "honduras", "nicaragua", "costarica", "panama"],
+    "note": "甘さとコクの釣り合いがよく、果実感とキャラメルのような甘さを持つものが多い。"
+  },
+  {
+    "id": "south",
+    "name": "南米",
+    "origins": ["colombia", "brazil", "peru", "bolivia"],
+    "note": "酸味は穏やかで、ナッツやチョコのような甘さが出やすい。"
+  },
+  {
+    "id": "asia",
+    "name": "アジア",
+    "origins": ["indonesia"],
+    "note": "酸味は控えめでコクが重く、ハーブやスパイスのような香りが出やすい。"
+  }
+]

@@ -1,0 +1,11 @@
+[
+  { "id": "light",  "name": "浅煎り",
+    "delta": { "acidity": 1,    "sweetness": 0, "body": -0.5, "aroma": 0.5,  "bitterness": -1 },
+    "note": "酸味と香りが立ち、苦味は弱い。" },
+  { "id": "medium", "name": "中煎り",
+    "delta": { "acidity": 0,    "sweetness": 0, "body": 0,    "aroma": 0,    "bitterness": 0 },
+    "note": "酸味と苦味の釣り合いがとれる。" },
+  { "id": "dark",   "name": "深煎り",
+    "delta": { "acidity": -1.5, "sweetness": 0, "body": 1,    "aroma": -0.5, "bitterness": 1.5 },
+    "note": "酸味が引き、苦味とコクが前に出る。" }
+]

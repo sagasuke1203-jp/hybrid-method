@@ -1,0 +1,11 @@
+[
+  { "id": "washed",  "name": "ウォッシュト",
+    "delta": { "acidity": 0,    "sweetness": 0,   "body": 0,   "aroma": 0,   "bitterness": 0 },
+    "note": "果肉を洗い流してから乾かす。雑味が少なくすっきりして、産地の個性がそのまま出やすい。" },
+  { "id": "honey",   "name": "ハニー",
+    "delta": { "acidity": 0,    "sweetness": 0.5, "body": 0.5, "aroma": 0,   "bitterness": 0 },
+    "note": "果肉のぬめりを残して乾かす。ウォッシュトとナチュラルの中間で、甘みとコクが少し増える。" },
+  { "id": "natural", "name": "ナチュラル",
+    "delta": { "acidity": -0.5, "sweetness": 0.5, "body": 0.5, "aroma": 0.5, "bitterness": 0 },
+    "note": "実のまま乾かす。熟した果実やワインのような甘さと香りが出やすい。" }
+]
