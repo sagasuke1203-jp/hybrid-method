@@ -81,7 +81,7 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--mut
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 
 /* hot / ice tabs */
-.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--surface); }
+.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--surface); }
 .tabs button {
   height: 44px; border: 0; border-radius: 6px; background: transparent; color: var(--muted);
   font-family: var(--font-body); font-weight: 700; font-size: 16px; cursor: pointer;
@@ -247,8 +247,50 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); ou
 .src { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
 .src a { color: var(--ink); text-underline-offset: 3px; }
 section { display: flex; flex-direction: column; gap: 12px; }
+.view { display: flex; flex-direction: column; gap: 28px; }
+
+/* 豆の味の傾向(豆タブ) */
+.bt-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+.bt-axis { display: flex; flex-direction: column; gap: 6px; }
+.bt-label { font-size: 13px; color: var(--muted); font-weight: 700; }
+.bt-sub { padding-left: 10px; border-left: 2px solid var(--line); }
+.bt-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.bt-chips button {
+  min-height: 36px; padding: 4px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  border-radius: 18px; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.bt-chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
+.bt-chips button.none { color: var(--muted); }
+.bt-chips button.none[aria-pressed="true"] { color: var(--bg); }
+.bt-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 16px; align-items: center; border-top: 1px solid var(--line); padding-top: 16px; }
+.bt-radar { width: 100%; max-width: 340px; justify-self: center; display: block; }
+.bt-radar .ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.bt-radar .spoke { stroke: var(--line); stroke-width: 1; }
+.bt-radar .base { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.bt-radar .final { fill: var(--flow); fill-opacity: 0.22; stroke: var(--flow); stroke-width: 2.5; stroke-linejoin: round; }
+.bt-radar .dot { fill: var(--flow); }
+.bt-radar text { fill: var(--ink); font-family: var(--font-body); font-size: 13px; font-weight: 700; }
+.bt-radar .v { fill: var(--muted); font-family: var(--font-num); font-size: 11px; font-weight: 500; }
+.bt-radar .tick { fill: var(--muted); font-family: var(--font-num); font-size: 9px; font-weight: 500; }
+.bt-scores { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.bt-scores li { display: grid; grid-template-columns: 3em minmax(0, 1fr) 2.6em; gap: 8px; align-items: center; font-size: 13px; }
+.bt-scores .track { height: 8px; background: var(--bg); border-radius: 4px; position: relative; overflow: hidden; }
+.bt-scores .fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--flow); border-radius: 4px; }
+.bt-scores .val { text-align: right; }
+.bt-legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; margin-top: 6px; }
+.bt-legend i { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid var(--flow); margin-right: 6px; vertical-align: middle; }
+.bt-legend i.dash { border-top: 1.5px dashed var(--muted); }
+.bt-notes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bt-notes li { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); gap: 10px; font-size: 14px; line-height: 1.65; }
+.bt-notes .k { font-size: 12px; color: var(--muted); font-weight: 700; padding-top: 2px; }
+.bt-notes .d { display: block; font-family: var(--font-num); font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.bt-notes .empty { display: block; font-size: 13px; color: var(--muted); }
+.bt-caution { font-size: 13px; line-height: 1.6; color: var(--steep); background: var(--steep-bg); border-radius: 6px; padding: 10px 12px; }
+.bt-status { font-size: 14px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.bt-status ul { margin: 6px 0 0; padding-left: 1.2em; font-size: 13px; }
 
 @media (max-width: 480px) {
+  .bt-result { grid-template-columns: minmax(0, 1fr); }
   .recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .recipes button:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .bean-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -266,10 +308,13 @@ section { display: flex; flex-direction: column; gap: 12px; }
 </style>
 
 <div class="wrap">
-  <div class="tabs" role="tablist" aria-label="ホットとアイス" id="tabCtl">
-    <button type="button" role="tab" id="tab-hot" data-k="hot" aria-selected="true" aria-controls="recipeCtl">ホット</button>
-    <button type="button" role="tab" id="tab-ice" data-k="ice" aria-selected="false" aria-controls="recipeCtl">アイス</button>
+  <div class="tabs" role="tablist" aria-label="表示の切り替え" id="tabCtl">
+    <button type="button" role="tab" id="tab-hot" data-k="hot" aria-selected="true" aria-controls="recipeView">ホット</button>
+    <button type="button" role="tab" id="tab-ice" data-k="ice" aria-selected="false" aria-controls="recipeView">アイス</button>
+    <button type="button" role="tab" id="tab-bean" data-k="bean" aria-selected="false" aria-controls="beanView">豆</button>
   </div>
+
+  <div id="recipeView" class="view">
 
   <section aria-labelledby="h-recipe">
     <h2 id="h-recipe">レシピ</h2>
@@ -370,8 +415,37 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <div class="caveat"><ul id="memo"></ul></div>
     <p class="src" id="src"></p>
   </section>
+  </div>
+
+  <div id="beanView" class="view" hidden>
+    <header>
+      <h1>豆の味の傾向</h1>
+      <p class="byline">産地・品種・精製方法・焙煎度を選ぶと、酸味・甘み・コク・香り・苦味の目安が出る。どれも選ばなくてよい。</p>
+    </header>
+    <div class="bt-status" id="btStatus" aria-live="polite">読み込み中…</div>
+    <div class="bt-panel" id="btPanel" hidden>
+      <div class="bt-axis"><span class="bt-label" id="bl-region">地域</span><div class="bt-chips" id="bc-region" role="group" aria-labelledby="bl-region"></div></div>
+      <div class="bt-axis bt-sub" id="btOriginBox"><span class="bt-label" id="bl-origin">産地</span><div class="bt-chips" id="bc-origin" role="group" aria-labelledby="bl-origin"></div></div>
+      <div class="bt-axis"><span class="bt-label" id="bl-variety">品種</span><div class="bt-chips" id="bc-variety" role="group" aria-labelledby="bl-variety"></div></div>
+      <div class="bt-axis"><span class="bt-label" id="bl-process">精製方法</span><div class="bt-chips" id="bc-process" role="group" aria-labelledby="bl-process"></div></div>
+      <div class="bt-axis"><span class="bt-label" id="bl-roast">焙煎度</span><div class="bt-chips" id="bc-roast" role="group" aria-labelledby="bl-roast"></div></div>
+      <div class="bt-result">
+        <svg class="bt-radar" id="btRadar" viewBox="-30 0 360 280" role="img" aria-label="味のレーダーチャート"></svg>
+        <div>
+          <ul class="bt-scores" id="btScores"></ul>
+          <div class="bt-legend"><span><i></i>選んだ条件</span><span><i class="dash"></i>産地(地域)だけ</span></div>
+        </div>
+      </div>
+      <div class="bt-axis">
+        <h2>選んだ条件の傾向</h2>
+        <ul class="bt-notes" id="btNotes"></ul>
+      </div>
+    </div>
+    <p class="bt-caution">どれも一般的な傾向で、同じ産地・品種でも農園や焙煎所によって味は変わる。数値は仮の値で、飲んだ印象に合わせて data/coffee/ の JSON を直していく前提。レシピの湯温や挽き目は変わらない。</p>
+  </div>
 </div>
 
+<script src="js/taste.js"></script>
 <script>
 (function () {
   // ---------- データ ----------
@@ -747,8 +821,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     R = RECIPES[recipeId];
     END = R.end;
     tab = R.kind;
-    var ts = $('tabCtl').children;
-    for (var i = 0; i < ts.length; i++) ts[i].setAttribute('aria-selected', ts[i].getAttribute('data-k') === tab ? 'true' : 'false');
+    paintTabs();
     buildRecipeCtl();
     document.title = R.title;
     pressAll('recipeCtl', 'data-id', recipeId);
@@ -996,6 +1069,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
   $('tabCtl').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     var k = b.getAttribute('data-k');
+    if (k === 'bean') { if (view !== 'bean') { showView('bean'); window.scrollTo(0, 0); } return; }
+    if (view === 'bean') { showView('recipe'); window.scrollTo(0, 0); }
     if (k === tab) return;
     var id = load('nhm.recipe.' + k, '');
     if (!RECIPES[id] || RECIPES[id].kind !== k) id = ORDER.filter(function (x) { return RECIPES[x].kind === k; })[0];
@@ -1042,9 +1117,164 @@ section { display: flex; flex-direction: column; gap: 12px; }
   $('minus').addEventListener('click', function () { changeDose(-1); });
   $('plus').addEventListener('click', function () { changeDose(1); });
 
+  // ---------- 豆の味の傾向(豆タブ) ----------
+  // 計算は js/taste.js、数値と説明は data/coffee/*.json。豆タブを初めて開いたときに読み込む。
+  // レシピの湯温や挽き目には反映しない。タイマーは豆タブを見ている間も動き続ける
+  var view = load('nhm.view', 'recipe') === 'bean' ? 'bean' : 'recipe';
+  var BT = null, btLoading = false;
+  var BT_DELTA = [['variety', 'varieties', '品種'], ['process', 'processes', '精製'], ['roast', 'roasts', '焙煎']];
+  var BT_RADAR = ['acidity', 'aroma', 'sweetness', 'body', 'bitterness']; // 似た指標が隣り合う並び
+  var btSel = (function () {
+    try { var o = JSON.parse(load('nhm.beanSel', '{}')); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; }
+  })();
+
+  function paintTabs() {
+    var cur = view === 'bean' ? 'bean' : tab;
+    var ts = $('tabCtl').children;
+    for (var i = 0; i < ts.length; i++) ts[i].setAttribute('aria-selected', ts[i].getAttribute('data-k') === cur ? 'true' : 'false');
+  }
+  function showView(v) {
+    view = v;
+    save('nhm.view', v);
+    $('recipeView').hidden = v === 'bean';
+    $('beanView').hidden = v !== 'bean';
+    document.title = v === 'bean' ? '豆の味の傾向' : R.title;
+    paintTabs();
+    if (v === 'bean') loadBeanData();
+  }
+  function esc(t) {
+    return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  }
+  function btStatus(msg, list) {
+    $('btStatus').hidden = !msg;
+    $('btStatus').innerHTML = msg ? esc(msg) + (list && list.length ? '<ul>' + list.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') : '';
+  }
+  function loadBeanData() {
+    if (BT || btLoading) return;
+    if (!window.Taste || !window.fetch || !window.Promise) { btStatus('この端末では豆のデータを読み込めない。'); return; }
+    btLoading = true;
+    btStatus('読み込み中…');
+    var keys = Object.keys(Taste.FILES);
+    Promise.all(keys.map(function (k) {
+      return fetch('data/coffee/' + Taste.FILES[k]).then(function (r) {
+        if (!r.ok) throw new Error(Taste.FILES[k]);
+        return r.json();
+      });
+    })).then(function (lists) {
+      var d = {};
+      keys.forEach(function (k, i) { d[k] = lists[i]; });
+      var errs = Taste.validate(d);
+      if (errs.length) { btStatus('data/coffee/ の JSON に直すところがある。', errs.slice(0, 8)); return; }
+      BT = d;
+      btCleanSel();
+      btBuild();
+      btStatus('');
+      $('btPanel').hidden = false;
+      btRender();
+    }).catch(function () {
+      btStatus('豆のデータを読み込めなかった。通信できる場所で、もう一度「豆」を押してください。');
+    }).then(function () { btLoading = false; });
+  }
+  // 保存していた選択のうち、データから消えたものは外す。産地があれば地域は産地に合わせる
+  function btCleanSel() {
+    if (!Taste.findById(BT.origins, btSel.origin)) btSel.origin = null;
+    if (!Taste.findById(BT.regions, btSel.region)) btSel.region = null;
+    if (btSel.origin) {
+      var owner = BT.regions.filter(function (r) { return r.origins.indexOf(btSel.origin) >= 0; })[0];
+      btSel.region = owner ? owner.id : null;
+    }
+    BT_DELTA.forEach(function (a) { if (!Taste.findById(BT[a[1]], btSel[a[0]])) btSel[a[0]] = null; });
+  }
+  function btChips(items) {
+    return '<button type="button" class="none" data-id="">指定なし</button>' +
+      items.map(function (i) { return '<button type="button" data-id="' + esc(i.id) + '">' + esc(i.name) + '</button>'; }).join('');
+  }
+  function btOriginChips() {
+    var r = Taste.findById(BT.regions, btSel.region);
+    $('btOriginBox').hidden = !r;
+    $('bc-origin').innerHTML = r ? btChips(r.origins.map(function (id) { return Taste.findById(BT.origins, id); })) : '';
+  }
+  function btPick(axis, id) {
+    btSel[axis] = id || null;
+    if (axis === 'region') {
+      var r = Taste.findById(BT.regions, btSel.region);
+      if (!r || r.origins.indexOf(btSel.origin) < 0) btSel.origin = null; // 地域を変えたら国は選び直し
+      btOriginChips();
+    }
+    save('nhm.beanSel', JSON.stringify(btSel));
+    btRender();
+  }
+  function btBuild() {
+    $('bc-region').innerHTML = btChips(BT.regions);
+    BT_DELTA.forEach(function (a) { $('bc-' + a[0]).innerHTML = btChips(BT[a[1]]); });
+    btOriginChips();
+    ['region', 'origin', 'variety', 'process', 'roast'].forEach(function (axis) {
+      $('bc-' + axis).addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return;
+        btPick(axis, b.getAttribute('data-id'));
+      });
+    });
+  }
+  var RCX = 150, RCY = 142, RR = 96;
+  function rpt(i, v) {
+    var ang = -Math.PI / 2 + i * 2 * Math.PI / BT_RADAR.length, r = RR * v / 5;
+    return [RCX + r * Math.cos(ang), RCY + r * Math.sin(ang)];
+  }
+  function rpoly(vals) {
+    return BT_RADAR.map(function (k, i) { return rpt(i, vals[k]).map(function (n) { return n.toFixed(1); }).join(','); }).join(' ');
+  }
+  function btRadar(final, base) {
+    var s = '', g, ring;
+    for (g = 1; g <= 5; g++) {
+      ring = {}; BT_RADAR.forEach(function (k) { ring[k] = g; });
+      s += '<polygon class="ring" points="' + rpoly(ring) + '"/>';
+    }
+    BT_RADAR.forEach(function (k, i) { var p = rpt(i, 5); s += '<line class="spoke" x1="' + RCX + '" y1="' + RCY + '" x2="' + p[0].toFixed(1) + '" y2="' + p[1].toFixed(1) + '"/>'; });
+    [1, 3, 5].forEach(function (v) { var p = rpt(0, v); s += '<text class="tick" x="' + (p[0] + 4) + '" y="' + (p[1] + 3) + '">' + v + '</text>'; });
+    s += '<polygon class="base" points="' + rpoly(base) + '"/>';
+    s += '<polygon class="final" points="' + rpoly(final) + '"/>';
+    BT_RADAR.forEach(function (k, i) { var p = rpt(i, final[k]); s += '<circle class="dot" r="3.5" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '"/>'; });
+    BT_RADAR.forEach(function (k, i) {
+      var p = rpt(i, 5.9), anchor = Math.abs(p[0] - RCX) < 4 ? 'middle' : (p[0] > RCX ? 'start' : 'end');
+      var dy = i === 0 ? -6 : (p[1] > RCY ? 12 : 4);
+      s += '<text x="' + p[0].toFixed(1) + '" y="' + (p[1] + dy).toFixed(1) + '" text-anchor="' + anchor + '">' + Taste.NAMES[k] +
+           '<tspan class="v" dx="4">' + final[k].toFixed(1) + '</tspan></text>';
+    });
+    $('btRadar').innerHTML = s;
+    $('btRadar').setAttribute('aria-label', '味のレーダーチャート ' + Taste.KEYS.map(function (k) { return Taste.NAMES[k] + final[k].toFixed(1); }).join('、'));
+  }
+  function btDeltaText(d) {
+    var parts = Taste.KEYS.filter(function (k) { return d[k]; }).map(function (k) { return Taste.NAMES[k] + (d[k] > 0 ? '+' : '−') + Math.abs(d[k]); });
+    return parts.length ? parts.join('  ') : '補正なし';
+  }
+  function btValsText(label, v) { return label + ' ' + Taste.KEYS.map(function (k) { return Taste.NAMES[k] + v[k]; }).join('  '); }
+  function btRender() {
+    ['region', 'origin', 'variety', 'process', 'roast'].forEach(function (axis) {
+      var bs = $('bc-' + axis).querySelectorAll('button');
+      for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', String((bs[i].getAttribute('data-id') || null) === (btSel[axis] || null)));
+    });
+    var final = Taste.compose(btSel, BT), base = Taste.baseFor(btSel, BT);
+    btRadar(final, base);
+    $('btScores').innerHTML = Taste.KEYS.map(function (k) {
+      return '<li><span>' + Taste.NAMES[k] + '</span><span class="track"><span class="fill" style="width:' + (final[k] / 5 * 100) + '%"></span></span><span class="val num">' + final[k].toFixed(1) + '</span></li>';
+    }).join('');
+    var notes = [];
+    var o = Taste.findById(BT.origins, btSel.origin), r = Taste.findById(BT.regions, btSel.region);
+    if (o) notes.push(['産地', o.name, o.note, btValsText('基本値', o.base)]);
+    else if (r) notes.push(['地域', r.name, r.note + '国を選ばないときは、この地域の国の平均で表示する。', btValsText('平均', base)]);
+    BT_DELTA.forEach(function (a) {
+      var it = Taste.findById(BT[a[1]], btSel[a[0]]);
+      if (it) notes.push([a[2], it.name, it.note, btDeltaText(it.delta)]);
+    });
+    $('btNotes').innerHTML = notes.length ? notes.map(function (n) {
+      return '<li><span class="k">' + n[0] + '</span><span><b>' + esc(n[1]) + '</b> ' + esc(n[2]) + '<span class="d">' + esc(n[3]) + '</span></span></li>';
+    }).join('') : '<li><span class="empty">条件を選ぶと、ここに傾向が出る。何も選ばないときは、すべて3の真ん中で表示する。</span></li>';
+  }
+
   buildRef();
   paintSound();
   renderRecipe();
+  showView(view);
 
   // オフラインでも開けるように Service Worker を登録(https か localhost のときだけ動く)
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

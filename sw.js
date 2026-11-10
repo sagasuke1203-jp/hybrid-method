@@ -2,14 +2,20 @@
 // 自分のファイルはネット優先(更新がすぐ届く)、つながらないときはキャッシュを使う。
 // Google Fonts はキャッシュ優先。
 // ファイル一覧を変えたときは CACHE の番号を上げる。
-var CACHE = 'nhm-v1';
+var CACHE = 'nhm-v2';
 var SHELL = [
   './',
   'index.html',
   'manifest.webmanifest',
   'icons/icon-180.png',
   'icons/icon-192.png',
-  'icons/icon-512.png'
+  'icons/icon-512.png',
+  'js/taste.js',
+  'data/coffee/regions.json',
+  'data/coffee/origins.json',
+  'data/coffee/varieties.json',
+  'data/coffee/processes.json',
+  'data/coffee/roasts.json'
 ];
 
 self.addEventListener('install', function (e) {
