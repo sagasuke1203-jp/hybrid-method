@@ -2,7 +2,7 @@
 // 自分のファイルはネット優先(更新がすぐ届く)、つながらないときはキャッシュを使う。
 // Google Fonts はキャッシュ優先。
 // ファイル一覧を変えたときは CACHE の番号を上げる。
-var CACHE = 'nhm-v2';
+var CACHE = 'nhm-v3';
 var SHELL = [
   './',
   'index.html',
@@ -11,6 +11,9 @@ var SHELL = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'js/taste.js',
+  'js/grind.js',
+  'data/coffee/grinders.json',
+  'data/coffee/calibrations.json',
   'data/coffee/regions.json',
   'data/coffee/origins.json',
   'data/coffee/varieties.json',

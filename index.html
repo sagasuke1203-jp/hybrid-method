@@ -247,6 +247,18 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); ou
 .src { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
 .src a { color: var(--ink); text-underline-offset: 3px; }
 section { display: flex; flex-direction: column; gap: 12px; }
+
+/* 手持ちのミルでの目安 */
+.mills { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.mills-h { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; }
+.mills ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mills li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; align-items: baseline; }
+.mills .name { font-size: 14px; font-weight: 700; min-width: 0; }
+.mills .val { font-size: 18px; font-weight: 600; text-align: right; }
+.mills .tag { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.mills .tag.measured { color: var(--flow); font-weight: 700; }
+.mills-note { font-size: 12px; color: var(--muted); }
+.mills-note ul { margin: 4px 0 0; padding-left: 1.2em; }
 .view { display: flex; flex-direction: column; gap: 28px; }
 
 /* 豆の味の傾向(豆タブ) */
@@ -329,6 +341,11 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <p class="byline" id="byline"></p>
     <h1 id="title"></h1>
     <ul class="spec" id="spec"></ul>
+    <div class="mills" id="millBox" hidden>
+      <p class="mills-h">手持ちのミルでの目安</p>
+      <ul id="millList"></ul>
+      <p class="mills-note" id="millNote">目安です。実測以外は計算で出した値で、ミルの刃の形や豆によって変わる。</p>
+    </div>
   </header>
 
   <section aria-labelledby="h-dose">
@@ -450,6 +467,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
 </div>
 
 <script src="js/taste.js"></script>
+<script src="js/grind.js"></script>
 <script>
 (function () {
   // ---------- データ ----------
@@ -500,7 +518,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: 'ニューハイブリッド', sub: 'スイッチ',
       title: 'ニューハイブリッドメソッド', byline: '粕谷哲さん考案 / HARIOスイッチで淹れる',
-      ratio: 15, end: 210, grind: '中挽き', grindMark: 3, useSwitch: true, tempMode: 'hilo',
+      ratio: 15, end: 210, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: true, tempMode: 'hilo',
       steps: function (d) {
         return [
           { t: 0,   state: 'close', name: '蒸らし',     cum: 2 * d,  temp: 'hi', note: '全体が浸る程度まで注いで、そのまま待つ。' },
@@ -530,7 +548,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: '4:6メソッド', sub: 'スイッチ開け / V60',
       title: '4:6メソッド', byline: '粕谷哲さん考案 / HARIOスイッチを開けたまま、またはV60で淹れる',
-      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, useSwitch: false, tempMode: 'hi', options: '46',
+      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, grindUm: 1000, useSwitch: false, tempMode: 'hi', options: '46',
       steps: function (d, o) {
         var first = Math.round({ sweet: 2.5, std: 3, bright: 3.5 }[o.taste] * d);
         var times = { 1: [90], 2: [90, 135], 3: [90, 135, 165] }[o.strength];
@@ -563,7 +581,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: 'スイッチ一投', sub: '閉じて浸す',
       title: 'スイッチで一投', byline: 'HARIOスイッチの基本の使い方 / 数値はこのページの目安',
-      ratio: 15, end: 180, grind: '中挽き', grindMark: 3, useSwitch: true, tempMode: 'hi',
+      ratio: 15, end: 180, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: true, tempMode: 'hi',
       steps: function (d) {
         return [
           { t: 0,   state: 'close', name: '全量を注ぐ',   cum: 15 * d, temp: 'hi', note: 'スイッチを閉じて、一度に全部注ぐ。粉がすべて湯に浸るように。' },
@@ -585,7 +603,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: 'MUGEN一投', sub: 'MUGEN',
       title: 'MUGENで一投', byline: 'HARIO公式レシピ / 粕谷さんと共同設計のMUGENドリッパーで淹れる',
-      ratio: 12, end: 150, grind: '中挽き', grindMark: 3, useSwitch: false, tempMode: 'fixed', fixedTemp: 91,
+      ratio: 12, end: 150, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: false, tempMode: 'fixed', fixedTemp: 91,
       steps: function (d) {
         return [
           { t: 0,  state: 'open', name: 'ゆっくり注ぐ',   cum: 12 * d, temp: 'hi', note: '中心から渦を描くように、ゆっくり一度に注ぐ。蒸らしはしない。' },
@@ -608,7 +626,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'ice',
       label: '急冷アイス', sub: '4:6 / 氷に落とす',
       title: '急冷式アイスコーヒー', byline: '粕谷哲さん考案 / 4:6メソッドのアイス版。スイッチを開けたまま、またはV60で淹れる',
-      ratio: 7.5, serverIce: 4, end: 180, grind: '中挽き', grindMark: 3, useSwitch: false,
+      ratio: 7.5, serverIce: 4, end: 180, grind: '中挽き', grindMark: 3, grindUm: 800, useSwitch: false,
       tempMode: 'fixed', fixedTemp: 90, fixedTempText: '90℃以上', tempNote: '深煎りでも高めが粕谷さんの好み', options: '46i',
       steps: function (d, o) {
         var c = function (k) { return Math.round(k * d); };
@@ -639,7 +657,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: 'JBrC 2026', sub: '優勝レシピ / V60',
       title: 'JBrC 2026 優勝レシピ', byline: '長崎愛美さん(Philocoffea) / ジャパン ブリューワーズ カップ2026決勝 / V60またはスイッチを開けたまま',
-      ratio: 12, end: 180, grind: '粗挽き・約1200μm', grindMark: 4, useSwitch: false,
+      ratio: 12, end: 180, grind: '粗挽き・約1200μm', grindMark: 4, grindUm: 1200, useSwitch: false,
       doseDefault: 17.5, doseStep: 0.5,
       tempMode: 'fixed2', fixedHi: 90, fixedLo: 75, tempNote: '大会のレシピ。焙煎度では変えない',
       steps: function (d) {
@@ -676,7 +694,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: '山口スペシャル', sub: 'ムゲンスイッチ',
       title: '山口スペシャル', byline: '自分のレシピ / HARIOムゲンスイッチで淹れる',
-      ratio: 230 / 15, end: 160, grind: '挽き目は未設定', grindMark: -1, useSwitch: true,
+      ratio: 230 / 15, end: 160, grind: '中粗挽き', grindMark: 4, grindUm: 1000, useSwitch: true,
       doseDefault: 15, tempMode: 'hilo', fixedLo: 70,
       steps: function (d) {
         return [
@@ -698,7 +716,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'ice',
       label: '水出し', sub: 'ひと晩浸ける',
       title: '水出しコーヒー', byline: 'Philocoffea(粕谷さんの店)の作り方 / 浸けてからペーパーでこす',
-      ratio: 14, end: 43200, grind: '粗挽き', grindMark: 4, useSwitch: false,
+      ratio: 14, end: 43200, grind: '粗挽き', grindMark: 4, grindUm: 1200, useSwitch: false,
       doseDefault: 50, doseMin: 20, doseMax: 100, doseStep: 5,
       tempMode: 'none', cold: true, noWake: true, finishAt: 36000, timeText: '10〜12時間',
       labels: { close: '浸ける', open: 'こす' },
@@ -766,7 +784,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
     return (h ? h + ':' + ('0' + m).slice(-2) : m) + ':' + ('0' + sec).slice(-2);
   }
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
   function stateLabel(s) { return R.labels ? R.labels[s] : R.useSwitch ? (s === 'open' ? 'OPEN' : 'CLOSE') : '透過'; }
   function tempText(k) {
     if (R.tempMode === 'fixed') return R.fixedTempText || R.fixedTemp + '℃';
@@ -831,6 +848,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     pressAll('recipeCtl', 'data-id', recipeId);
     $('byline').textContent = R.byline;
     $('title').textContent = R.title;
+    renderMills();
     $('optsSec').hidden = R.options !== '46' && R.options !== '46i';
     $('strengthBox').hidden = R.options !== '46';
     $('why').parentElement.hidden = !R.why.length;
@@ -1120,6 +1138,46 @@ section { display: flex; flex-direction: column; gap: 12px; }
   }
   $('minus').addEventListener('click', function () { changeDose(-1); });
   $('plus').addEventListener('click', function () { changeDose(1); });
+
+  // ---------- 手持ちのミルでの目安 ----------
+  // ミルは data/coffee/grinders.json(owned: true が手持ち)、実測は calibrations.json。起動時に読み込む。
+  // 換算の中身は js/grind.js。レシピの挽き目の µm は RECIPES の grindUm(仮の値)
+  var MILLS = null;
+  var KIND_TEXT = { measured: '実測', reference: '目安', rough: 'かなり粗い目安(実測がまだない)', uncalibrated: '未校正(実測がまだない)' };
+  function millValue(g, v) { return g.unit === 'dial' ? String(v) : v + 'クリック'; }
+  function renderMills() {
+    if (!MILLS) return;
+    var um = {};
+    ORDER.forEach(function (id) { if (RECIPES[id].grindUm) um[id] = RECIPES[id].grindUm; });
+    var owned = MILLS.grinders.filter(function (g) { return g.owned; });
+    $('millBox').hidden = !owned.length;
+    $('millList').innerHTML = owned.map(function (g) {
+      var r = Grind.settingFor(recipeId, g, MILLS.calibrations, um);
+      var tag = r.kind === 'relative' ? '目安(' + RECIPES[r.from].title + 'の実測から計算)'
+        : KIND_TEXT[r.kind] + ((r.kind === 'measured' || r.kind === 'reference') && r.note ? '。' + r.note : '');
+      return '<li><span class="name">' + esc(g.name) + '</span><span class="val num">' +
+        (r.kind === 'uncalibrated' ? '—' : millValue(g, r.value)) + '</span>' +
+        '<span class="tag ' + r.kind + '">' + esc(tag) + '</span></li>';
+    }).join('');
+  }
+  (function loadMills() {
+    if (!window.Grind || !window.fetch || !window.Promise) return;
+    Promise.all([Grind.FILES.grinders, Grind.FILES.calibrations].map(function (f) {
+      return fetch('data/coffee/' + f).then(function (r) { if (!r.ok) throw new Error(f); return r.json(); });
+    })).then(function (lists) {
+      var d = { grinders: lists[0], calibrations: lists[1] };
+      var errs = Grind.validate(d, ORDER);
+      if (errs.length) {
+        $('millBox').hidden = false;
+        $('millList').innerHTML = '';
+        $('millNote').innerHTML = 'data/coffee/ のミルの JSON に直すところがある。<ul>' +
+          errs.slice(0, 8).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+        return;
+      }
+      MILLS = d;
+      renderMills();
+    }).catch(function () { /* 読めなければミルの欄は出さない */ });
+  })();
 
   // ---------- 豆の味の傾向(豆タブ) ----------
   // 計算は js/taste.js、数値と説明は data/coffee/*.json。豆タブを初めて開いたときに読み込む。
