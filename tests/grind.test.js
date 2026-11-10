@@ -13,7 +13,7 @@ const g = (id) => grinders.find((x) => x.id === id);
 const own = cals.filter((c) => c.source !== 'public'); // 自分の実測だけ
 
 // index.html の RECIPES の grindUm と同じ値
-const UM = { hybrid: 710, m46: 830, sw1: 710, mugen: 710, jbrc26: 1200, yamaguchi: 790, iced46: 710, cold: 1200 };
+const UM = { hybrid: 710, m46: 820, sw1: 710, mugen: 710, jbrc26: 1200, yamaguchi: 760, iced46: 710, cold: 1200 };
 const RECIPE_IDS = Object.keys(UM);
 
 test('同梱の JSON に書き間違いがない', () => {
@@ -30,9 +30,9 @@ test('実測があればそのまま出す', () => {
 });
 
 test('換算式を持つミルは、レシピの粒の大きさから換算する', () => {
-  assert.deepEqual(G.settingFor('hybrid', g('timemore-c3s'), cals, UM), { kind: 'converted', value: 18, um: 710, warn: null });
-  assert.deepEqual(G.settingFor('yamaguchi', g('kalita-nicecut-g'), cals, UM), { kind: 'converted', value: 4.5, um: 790, warn: null });
-  assert.equal(G.settingFor('m46', g('timemore-c3s'), cals, UM).value, 21);
+  assert.deepEqual(G.settingFor('hybrid', g('timemore-c3s'), cals, UM), { kind: 'converted', value: 19, um: 710, warn: null });
+  assert.deepEqual(G.settingFor('yamaguchi', g('kalita-nicecut-g'), cals, UM), { kind: 'converted', value: 4.5, um: 760, warn: null });
+  assert.equal(G.settingFor('m46', g('timemore-c3s'), cals, UM).value, 22);
   assert.equal(G.settingFor('m46', g('kalita-nicecut-g'), cals, UM).value, 5);
   assert.equal(G.settingFor('m46', g('comandante-c40'), cals, UM).value, 30);
 });
@@ -40,7 +40,8 @@ test('換算式を持つミルは、レシピの粒の大きさから換算す�
 test('実測と換算は同じ式でつながっている', () => {
   // ハイブリッドの ナイスカットG 4 と、山口スペシャルの C3s 20 を µm にすると grindUm とほぼ同じ
   assert.equal(G.umFromSetting(g('kalita-nicecut-g'), 4), 708);
-  assert.equal(G.umFromSetting(g('timemore-c3s'), 20), 790);
+  assert.equal(G.umFromSetting(g('timemore-c3s'), 20), 760);
+  assert.equal(G.umFromSetting(g('comandante-c40'), 30), 817.5);
 });
 
 test('C3s で出せない粗さは上限と注意', () => {
@@ -82,11 +83,11 @@ test('ダイヤル式は 0.5 刻みに丸め、目盛りの範囲に収める', 
 
 test('換算: 粒の大きさ ⇄ 設定(比較表と同じ値)', () => {
   const cmd = g('comandante-c40'), nc = g('kalita-nicecut-g'), c3 = g('timemore-c3s');
-  assert.equal(G.umFromSetting(cmd, 25), 685);
+  assert.equal(G.umFromSetting(cmd, 25), 681.25);
   assert.deepEqual(G.settingFromUm(nc, G.umFromSetting(cmd, 25)), { value: 4, warn: null });
   assert.deepEqual(G.settingFromUm(c3, G.umFromSetting(cmd, 25)), { value: 18, warn: null });
-  const um20 = G.umFromSetting(c3, 20);                                    // 790
-  assert.deepEqual(G.settingFromUm(cmd, um20), { value: 29, warn: null });
+  const um20 = G.umFromSetting(c3, 20);                                    // 760
+  assert.deepEqual(G.settingFromUm(cmd, um20), { value: 28, warn: null });
   assert.deepEqual(G.settingFromUm(nc, um20), { value: 4.5, warn: null });
 });
 
@@ -99,8 +100,17 @@ test('換算: 範囲の外は端の値と注意を返す', () => {
   assert.deepEqual(G.rangeOf(c3), { min: 1, max: 25, step: 1 });
 });
 
-test('換算の式を持つミルはコマンダンテ・ナイスカットG・C3s', () => {
-  assert.deepEqual(grinders.filter((x) => x.scale).map((x) => x.id).sort(), ['comandante-c40', 'kalita-nicecut-g', 'timemore-c3s']);
+test('換算の式を持つミルはコマンダンテ・ナイスカットG・C3s・Varia VS3', () => {
+  assert.deepEqual(grinders.filter((x) => x.scale).map((x) => x.id).sort(), ['comandante-c40', 'kalita-nicecut-g', 'timemore-c3s', 'varia-vs3-gen2']);
+});
+
+test('Varia VS3 は 0.5 刻みの目盛りで、0 より細かくできない', () => {
+  const v = g('varia-vs3-gen2');
+  assert.deepEqual(G.rangeOf(v), { min: 0, max: 19.5, step: 0.5 });
+  assert.deepEqual(G.settingFromUm(v, G.umFromSetting(g('comandante-c40'), 25)), { value: 8, warn: null });   // 681µm
+  assert.deepEqual(G.settingFromUm(v, G.umFromSetting(g('timemore-c3s'), 20)), { value: 9.5, warn: null });  // 760µm
+  assert.deepEqual(G.settingFromUm(v, 100), { value: 0, warn: 'fine' });
+  assert.equal(G.settingFor('hybrid', v, cals, UM).value, 8.5);                                                // 710µm
 });
 
 test('validate は書き間違いを見つける', () => {

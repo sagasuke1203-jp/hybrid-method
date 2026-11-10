@@ -293,7 +293,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
 .mc-all > summary { cursor: pointer; font-weight: 700; font-size: 14px; padding: 6px 0; }
 .mc-all[open] > summary { margin-bottom: 10px; }
 .mc-tbl { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
-.mc-tbl table { border-collapse: separate; border-spacing: 0; width: 100%; }
+.mc-tbl table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
 .mc-tbl th, .mc-tbl td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .mc-tbl tbody tr:last-child td { border-bottom: 0; }
 .mc-tbl thead th {
@@ -368,8 +368,11 @@ section { display: flex; flex-direction: column; gap: 12px; }
 @media (max-width: 420px) {
   h1 { font-size: 26px; }
   .mc-seg button { font-size: 12px; }
-  .mc-tbl th, .mc-tbl td { padding: 6px; }
-  .mc-tbl thead th { font-size: 11px; letter-spacing: -0.02em; }
+  .mc-tbl th, .mc-tbl td { padding: 6px 4px; }
+  .mc-tbl thead th { font-size: 10.5px; letter-spacing: -0.04em; white-space: normal; word-break: keep-all; padding-inline: 3px; }
+  .mc-tbl td.v { font-size: 14px; }
+  .mc-tbl td.base { font-size: 15px; }
+  .mc-tbl td.um { font-size: 12px; }
   .step { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
   .when { font-size: 19px; }
   .idea { grid-template-columns: 1fr; gap: 2px; }
@@ -540,12 +543,13 @@ section { display: flex; flex-direction: column; gap: 12px; }
     </div>
     <details class="mc-all" id="mcAll" hidden>
       <summary id="mcAllSum">対応表を全部見る</summary>
-      <div class="mc-tbl"><table><thead><tr id="mcHead"></tr></thead><tbody id="mcRows"></tbody></table></div>
+      <div class="mc-tbl"><table><colgroup id="mcCols"></colgroup><thead><tr id="mcHead"></tr></thead><tbody id="mcRows"></tbody></table></div>
     </details>
     <div class="mc-notes">
       <ul>
-        <li>コマンダンテと C3s は、同じ早見表サイト(Honest Coffee Guide)の抽出方法ごとの「粒の大きさとクリックの範囲」から式を出した。クリックは刃を閉じた位置から数える。</li>
-        <li>ナイスカットGは公開されている目盛りの目安(1 細挽き・3.5 カリタ挽き・4.5 中挽き・8 粗挽き)からの推定。</li>
+        <li>コマンダンテ・C3s・Varia VS3 は、早見表サイト(Honest Coffee Guide)の図から、設定と粒の大きさの対応を読み取った。クリックや目盛りは刃を閉じた位置から数える。</li>
+        <li>ナイスカットGは公開されている目盛りの目安(1 細挽き・3.5 カリタ挽き・4.5 中挽き・8 粗挽き)からの推定。早見表の図とは合わないので使っていない。</li>
+        <li>Varia VS3 は段なしの目盛りなので、0.5刻みで表示している。</li>
         <li>式は data/coffee/grinders.json の scale(粒の大きさ = a × 設定 + b)。直せば換算も変わる。</li>
       </ul>
     </div>
@@ -642,7 +646,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: '4:6メソッド', sub: 'スイッチ開け / V60',
       title: '4:6メソッド', byline: '粕谷哲さん考案 / HARIOスイッチを開けたまま、またはV60で淹れる',
-      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, grindUm: 830, useSwitch: false, tempMode: 'hi', options: '46',
+      ratio: 15, end: 210, grind: '中粗〜粗挽き', grindMark: 4, grindUm: 820, useSwitch: false, tempMode: 'hi', options: '46',
       steps: function (d, o) {
         var first = Math.round({ sweet: 2.5, std: 3, bright: 3.5 }[o.taste] * d);
         var times = { 1: [90], 2: [90, 135], 3: [90, 135, 165] }[o.strength];
@@ -788,7 +792,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
       kind: 'hot',
       label: '山口スペシャル', sub: 'ムゲンスイッチ',
       title: '山口スペシャル', byline: '自分のレシピ / HARIOムゲンスイッチで淹れる',
-      ratio: 230 / 15, end: 160, grind: '中粗挽き', grindMark: 4, grindUm: 790, useSwitch: true,
+      ratio: 230 / 15, end: 160, grind: '中粗挽き', grindMark: 4, grindUm: 760, useSwitch: true,
       doseDefault: 15, tempMode: 'hilo', fixedLo: 70,
       steps: function (d) {
         return [
@@ -1236,7 +1240,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
   // ---------- 手持ちのミルでの目安 ----------
   // ミルは data/coffee/grinders.json(owned: true が手持ち)、実測は calibrations.json。起動時に読み込む。
   // 換算の中身は js/grind.js。レシピの粒の大きさ(µm)は RECIPES の grindUm。
-  // 中挽きはナイスカットG 4(実測)、4:6 はコマンダンテ30(公開)、山口スペシャルは C3s 20(実測)を換算式で µm にした値。粗挽きは約1200µm
+  // 中挽きはナイスカットG 4(実測)、4:6 はコマンダンテ30(公開)、山口スペシャルは C3s 20(実測)を換算式で µm にした値。粗挽きは約1200µm。
+  // 換算式を変えたら、ここも計算し直す
   var MILLS = null;
   var KIND_TEXT = { measured: '実測', converted: '目安', reference: '目安', rough: 'かなり粗い目安(実測がまだない)', uncalibrated: '未校正(実測がまだない)' };
   function millValue(g, v) { return g.unit === 'dial' ? String(v) : v + 'クリック'; }
@@ -1288,7 +1293,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
   // ---------- ミルの換算(道具 > ミルの換算) ----------
   // grinders.json で scale を持つミルどうしを、粒の大きさ(µm)を介して換算する。式は js/grind.js
   var MILLS_ERR = null, mcBuilt = false;
-  var MC_ORDER = ['comandante-c40', 'kalita-nicecut-g', 'timemore-c3s'];
+  var MC_ORDER = ['comandante-c40', 'kalita-nicecut-g', 'timemore-c3s', 'varia-vs3-gen2'];
   var MC_BANDS = [[0, '極細挽き'], [200, '細挽き'], [380, '中細挽き'], [600, '中挽き'], [850, '中粗挽き'], [1000, '粗挽き']];
   var MC_WARN = { fine: 'これより細かくできない', coarse: 'これより粗くできない', unsafe: 'これより細かいと刃を傷めやすい' };
   function mcBand(um) { var b = MC_BANDS[0][1]; MC_BANDS.forEach(function (x) { if (um >= x[0]) b = x[1]; }); return b; }
@@ -1299,6 +1304,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
     });
   }
   function mcShort(g) { return g.short || g.name; }
+  // 表の見出し: 「ナイスカット|G」のように、全角と英字の境目でだけ折り返せるようにする
+  function mcHeadName(g) { return esc(mcShort(g)).replace(/([\u3000-\uffff])([A-Za-z])/g, '$1<wbr>$2'); }
   function mcSteps(g) {
     var r = Grind.rangeOf(g), out = [];
     for (var v = r.min; v <= r.max + 1e-9; v += r.step) out.push(Math.round(v * 10) / 10);
@@ -1307,7 +1314,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
   function mcBuild(list) {
     var src = load('nhm.mill.src', list[0].id);
     if (!list.some(function (g) { return g.id === src; })) save('nhm.mill.src', list[0].id);
-    $('mcSrc').style.gridTemplateColumns = 'repeat(' + list.length + ', minmax(0, 1fr))';
+    $('mcSrc').style.gridTemplateColumns = 'repeat(' + (list.length > 3 ? 2 : list.length) + ', minmax(0, 1fr))';
     $('mcSrc').innerHTML = list.map(function (g) { return '<button type="button" data-g="' + esc(g.id) + '">' + esc(mcShort(g)) + '</button>'; }).join('');
     $('mcSrc').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
@@ -1318,8 +1325,11 @@ section { display: flex; flex-direction: column; gap: 12px; }
     // 対応表は最初のミル(コマンダンテ)の目盛りを基準に並べる
     var base = list[0], others = list.slice(1);
     $('mcAllSum').textContent = '対応表を全部見る(' + mcShort(base) + '基準)';
-    $('mcHead').innerHTML = '<th>' + esc(mcShort(base)) + '<small>' + (base.unit === 'dial' ? 'ダイヤル' : 'クリック') + '</small></th><th>粒の大きさ<small>µm</small></th>' +
-      others.map(function (g) { return '<th>' + esc(mcShort(g)) + '<small>' + (g.unit === 'dial' ? 'ダイヤル' : 'クリック') + '</small></th>'; }).join('');
+    var share = Math.floor((100 - 17 - 18) / others.length); // 基準の列は18%前後、粒の大きさは17%
+    $('mcCols').innerHTML = '<col style="width:' + (100 - 17 - share * others.length) + '%"><col style="width:17%">' +
+      others.map(function () { return '<col style="width:' + share + '%">'; }).join('');
+    $('mcHead').innerHTML = '<th>' + mcHeadName(base) + '<small>' + (base.unit === 'dial' ? 'ダイヤル' : 'クリック') + '</small></th><th>粒の大きさ<small>µm</small></th>' +
+      others.map(function (g) { return '<th>' + mcHeadName(g) + '<small>' + (g.unit === 'dial' ? 'ダイヤル' : 'クリック') + '</small></th>'; }).join('');
     var prev = '';
     $('mcRows').innerHTML = mcSteps(base).map(function (v) {
       var um = Grind.umFromSetting(base, v), band = mcBand(Math.max(0, um)), first = band !== prev;
@@ -1351,7 +1361,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     $('mcUm').innerHTML = '粒の大きさ <b>' + (um < 0 ? 'ごく細かい' : '約' + Math.round(um / 10) * 10 + 'µm') + '</b>(' + mcBand(Math.max(0, um)) + ')';
     $('mcOut').innerHTML = list.filter(function (o) { return o.id !== g.id; }).map(function (o) {
       var r = Grind.settingFromUm(o, um);
-      return '<div><span class="n">' + esc(o.name) + '</span><span class="x">' + r.value + (o.unit === 'dial' ? '' : '<small>クリック</small>') + '</span>' +
+      return '<div><span class="n">' + esc(mcShort(o)) + '</span><span class="x">' + r.value + (o.unit === 'dial' ? '' : '<small>クリック</small>') + '</span>' +
         (r.warn ? '<span class="w">' + MC_WARN[r.warn] + '</span>' : '') + '</div>';
     }).join('');
   }
