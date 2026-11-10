@@ -63,6 +63,50 @@
 
   function copy(v) { var o = {}; KEYS.forEach(function (k) { o[k] = v[k]; }); return o; }
 
+  // 選んだ産地(なければ地域の国すべて)。どちらもなければ null
+  function originsInScope(sel, data) {
+    var o = findById(data.origins, sel.origin);
+    if (o) return [o];
+    var r = findById(data.regions, sel.region);
+    if (!r) return null;
+    return (r.origins || []).map(function (id) { return findById(data.origins, id); }).filter(Boolean);
+  }
+
+  // 品種(axis='variety')や精製方法(axis='process')を、その産地でよく見かけるものと、それ以外に分ける。
+  //   品種: origins.json の varieties に載っているものがよく見かけるもの
+  //   精製: processes.json の onlyIn がなければどこでも見かける。あればその国だけ
+  //   産地も地域も選んでいなければ、すべてよく見かけるものとして扱う
+  function splitCommon(axis, sel, data) {
+    sel = sel || {};
+    var list = data[axis === 'variety' ? 'varieties' : 'processes'] || [];
+    var scope = originsInScope(sel, data);
+    if (!scope) return { common: list.slice(), other: [] };
+    var ok = {};
+    scope.forEach(function (o) {
+      if (axis === 'variety') (o.varieties || []).forEach(function (id) { ok[id] = true; });
+      else ok[o.id] = true;
+    });
+    var out = { common: [], other: [] };
+    list.forEach(function (it) {
+      var common = axis === 'variety' ? !!ok[it.id]
+        : !it.onlyIn || it.onlyIn.some(function (id) { return ok[id]; });
+      out[common ? 'common' : 'other'].push(it);
+    });
+    return out;
+  }
+
+  // 選んだ品種・精製方法のうち、その産地ではあまり見かけないもの
+  function unusual(sel, data) {
+    sel = sel || {};
+    var res = [];
+    ['variety', 'process'].forEach(function (axis) {
+      if (!sel[axis]) return;
+      var other = splitCommon(axis, sel, data).other;
+      if (other.some(function (it) { return it.id === sel[axis]; })) res.push(axis);
+    });
+    return res;
+  }
+
   // JSON を手で直したときの書き間違いを見つける。問題がなければ空の配列
   function validate(data) {
     var errs = [];
@@ -101,12 +145,32 @@
         if (o && o.id && !owner[o.id]) errs.push(o.id + ' がどの地域にも入っていない');
       });
     }
+    // よく見かける品種(origins.json の varieties)と、精製方法の onlyIn は省略できる。書くなら実在する id で
+    if (Array.isArray(data.origins) && Array.isArray(data.varieties)) {
+      data.origins.forEach(function (o) {
+        if (!o || o.varieties === undefined) return;
+        if (!Array.isArray(o.varieties)) { errs.push(FILES.origins + ' の ' + o.id + ' の varieties が配列でない'); return; }
+        o.varieties.forEach(function (id) {
+          if (!findById(data.varieties, id)) errs.push(FILES.origins + ' の ' + o.id + ' にある品種 ' + id + ' が varieties.json にない');
+        });
+      });
+    }
+    if (Array.isArray(data.processes) && Array.isArray(data.origins)) {
+      data.processes.forEach(function (p) {
+        if (!p || p.onlyIn === undefined) return;
+        if (!Array.isArray(p.onlyIn)) { errs.push(FILES.processes + ' の ' + p.id + ' の onlyIn が配列でない'); return; }
+        p.onlyIn.forEach(function (id) {
+          if (!findById(data.origins, id)) errs.push(FILES.processes + ' の ' + p.id + ' にある産地 ' + id + ' が origins.json にない');
+        });
+      });
+    }
     return errs;
   }
 
   return {
     KEYS: KEYS, NAMES: NAMES, NEUTRAL: NEUTRAL, FILES: FILES,
     clamp: clamp, findById: findById, regionAverage: regionAverage,
-    baseFor: baseFor, compose: compose, validate: validate
+    baseFor: baseFor, compose: compose, validate: validate,
+    splitCommon: splitCommon, unusual: unusual
   };
 });

@@ -17,12 +17,57 @@ test('同梱の JSON に書き間違いがない', () => {
   assert.deepEqual(T.validate(data), []);
 });
 
-test('件数: 産地17・地域4・品種10・精製3・焙煎3', () => {
+test('件数: 産地17・地域4・品種18・精製8・焙煎3', () => {
   assert.equal(data.origins.length, 17);
   assert.equal(data.regions.length, 4);
-  assert.equal(data.varieties.length, 10);
-  assert.equal(data.processes.length, 3);
+  assert.equal(data.varieties.length, 18);
+  assert.equal(data.processes.length, 8);
   assert.equal(data.roasts.length, 3);
+});
+
+test('どの産地にも、よく見かける品種が1つ以上ある', () => {
+  for (const o of data.origins) assert.ok(o.varieties.length > 0, o.id);
+});
+
+const ids = (list) => list.map((x) => x.id);
+
+test('産地を選ぶと、品種はよく見かけるものとそれ以外に分かれる', () => {
+  const s = T.splitCommon('variety', { origin: 'kenya' }, data);
+  assert.deepEqual(ids(s.common), ['sl28', 'sl34', 'batian']);
+  assert.equal(s.common.length + s.other.length, data.varieties.length);
+  assert.ok(ids(s.other).includes('geisha'));
+});
+
+test('地域だけなら、その地域の国でよく見かける品種をまとめる', () => {
+  const s = T.splitCommon('variety', { region: 'africa' }, data);
+  for (const id of ['heirloom', 'geisha', 'sl28', 'sl34', 'batian', 'bourbon', 'yemenia']) assert.ok(ids(s.common).includes(id), id);
+  assert.ok(ids(s.other).includes('castillo'));
+});
+
+test('産地も地域も選ばなければ、品種も精製もすべて表示', () => {
+  assert.equal(T.splitCommon('variety', {}, data).other.length, 0);
+  assert.equal(T.splitCommon('process', {}, data).other.length, 0);
+});
+
+test('スマトラ式はインドネシアだけ、パルプドナチュラルはブラジルだけでよく見かける', () => {
+  const indo = ids(T.splitCommon('process', { origin: 'indonesia' }, data).common);
+  assert.ok(indo.includes('wethulled') && !indo.includes('pulped') && indo.includes('washed'));
+  const bra = ids(T.splitCommon('process', { origin: 'brazil' }, data).common);
+  assert.ok(bra.includes('pulped') && !bra.includes('wethulled'));
+  const asia = ids(T.splitCommon('process', { region: 'asia' }, data).common);
+  assert.ok(asia.includes('wethulled'));
+});
+
+test('あまり見かけない組み合わせを見つける', () => {
+  assert.deepEqual(T.unusual({ origin: 'kenya', variety: 'sl28', process: 'washed' }, data), []);
+  assert.deepEqual(T.unusual({ origin: 'ethiopia', variety: 'castillo' }, data), ['variety']);
+  assert.deepEqual(T.unusual({ origin: 'kenya', variety: 'castillo', process: 'wethulled' }, data), ['variety', 'process']);
+  assert.deepEqual(T.unusual({ variety: 'castillo', process: 'wethulled' }, data), []);
+});
+
+test('珍しい品種でも味の計算はふつうにできる', () => {
+  const r = T.compose({ origin: 'ethiopia', variety: 'castillo' }, data);
+  assert.deepEqual(r, T.findById(data.origins, 'ethiopia').base);
 });
 
 test('clamp は 1〜5 に収める', () => {
@@ -102,7 +147,11 @@ test('validate は書き間違いを見つける', () => {
   bad.roasts.push({ id: 'light', name: '浅煎り2', delta: { ...T.NEUTRAL } });
   bad.regions[0].origins.push('atlantis');
   bad.origins.push({ id: 'vietnam', name: 'ベトナム', base: { ...T.NEUTRAL } });
+  bad.origins[1].varieties.push('robusta');
+  bad.processes[3].onlyIn = ['japan'];
   const errs = T.validate(bad).join('\n');
+  assert.match(errs, /kenya にある品種 robusta が varieties\.json にない/);
+  assert.match(errs, /pulped にある産地 japan が origins\.json にない/);
   assert.match(errs, /ethiopia の base\.acidity が 1〜5 の外/);
   assert.match(errs, /geisha の delta\.aroma が数値でない/);
   assert.match(errs, /roasts\.json の id light が重複/);

@@ -262,6 +262,9 @@ section { display: flex; flex-direction: column; gap: 12px; }
 .bt-chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
 .bt-chips button.none { color: var(--muted); }
 .bt-chips button.none[aria-pressed="true"] { color: var(--bg); }
+.bt-chips button.other { border-style: dashed; }
+.bt-chips button.other[aria-pressed="true"] { border-style: solid; }
+.bt-chips button.bt-more { background: transparent; border-style: dashed; color: var(--muted); font-weight: 700; }
 .bt-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 16px; align-items: center; border-top: 1px solid var(--line); padding-top: 16px; }
 .bt-radar { width: 100%; max-width: 340px; justify-self: center; display: block; }
 .bt-radar .ring { fill: none; stroke: var(--line); stroke-width: 1; }
@@ -285,6 +288,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
 .bt-notes .k { font-size: 12px; color: var(--muted); font-weight: 700; padding-top: 2px; }
 .bt-notes .d { display: block; font-family: var(--font-num); font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .bt-notes .empty { display: block; font-size: 13px; color: var(--muted); }
+.bt-notes .u { display: block; font-size: 12px; font-weight: 700; color: var(--steep); margin-top: 2px; }
 .bt-caution { font-size: 13px; line-height: 1.6; color: var(--steep); background: var(--steep-bg); border-radius: 6px; padding: 10px 12px; }
 .bt-status { font-size: 14px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
 .bt-status ul { margin: 6px 0 0; padding-left: 1.2em; font-size: 13px; }
@@ -1204,13 +1208,32 @@ section { display: flex; flex-direction: column; gap: 12px; }
     save('nhm.beanSel', JSON.stringify(btSel));
     btRender();
   }
+  // 品種と精製方法は、選んだ産地(地域)でよく見かけるものだけを出し、残りは「ほかの…も表示」で開く。
+  // 珍しいものを選んでいるときは、閉じてもそのボタンだけは残す
+  var btMore = { variety: false, process: false };
+  var BT_MORE_LABEL = { variety: '品種', process: '精製' };
+  function btAxisChips(axis) {
+    var sp = Taste.splitCommon(axis, btSel, BT), open = btMore[axis];
+    var html = btChips(sp.common);
+    if (sp.other.length) {
+      html += sp.other.map(function (i) {
+        var hide = !open && i.id !== btSel[axis];
+        return '<button type="button" class="other" data-id="' + esc(i.id) + '"' + (hide ? ' hidden' : '') + '>' + esc(i.name) + '</button>';
+      }).join('');
+      // 開閉ボタンは常に一番後ろ
+      html += '<button type="button" class="bt-more" data-more="1" aria-expanded="' + open + '">' +
+        (open ? 'ほかの' + BT_MORE_LABEL[axis] + 'を閉じる' : 'ほかの' + BT_MORE_LABEL[axis] + 'も表示(' + sp.other.length + ')') + '</button>';
+    }
+    $('bc-' + axis).innerHTML = html;
+  }
   function btBuild() {
     $('bc-region').innerHTML = btChips(BT.regions);
-    BT_DELTA.forEach(function (a) { $('bc-' + a[0]).innerHTML = btChips(BT[a[1]]); });
+    $('bc-roast').innerHTML = btChips(BT.roasts);
     btOriginChips();
     ['region', 'origin', 'variety', 'process', 'roast'].forEach(function (axis) {
       $('bc-' + axis).addEventListener('click', function (e) {
         var b = e.target.closest('button'); if (!b) return;
+        if (b.hasAttribute('data-more')) { btMore[axis] = !btMore[axis]; btRender(); return; }
         btPick(axis, b.getAttribute('data-id'));
       });
     });
@@ -1249,10 +1272,13 @@ section { display: flex; flex-direction: column; gap: 12px; }
   }
   function btValsText(label, v) { return label + ' ' + Taste.KEYS.map(function (k) { return Taste.NAMES[k] + v[k]; }).join('  '); }
   function btRender() {
+    btAxisChips('variety');
+    btAxisChips('process');
     ['region', 'origin', 'variety', 'process', 'roast'].forEach(function (axis) {
-      var bs = $('bc-' + axis).querySelectorAll('button');
+      var bs = $('bc-' + axis).querySelectorAll('button[data-id]');
       for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', String((bs[i].getAttribute('data-id') || null) === (btSel[axis] || null)));
     });
+    var odd = Taste.unusual(btSel, BT);
     var final = Taste.compose(btSel, BT), base = Taste.baseFor(btSel, BT);
     btRadar(final, base);
     $('btScores').innerHTML = Taste.KEYS.map(function (k) {
@@ -1264,10 +1290,12 @@ section { display: flex; flex-direction: column; gap: 12px; }
     else if (r) notes.push(['地域', r.name, r.note + '国を選ばないときは、この地域の国の平均で表示する。', btValsText('平均', base)]);
     BT_DELTA.forEach(function (a) {
       var it = Taste.findById(BT[a[1]], btSel[a[0]]);
-      if (it) notes.push([a[2], it.name, it.note, btDeltaText(it.delta)]);
+      if (it) notes.push([a[2], it.name, it.note, btDeltaText(it.delta), odd.indexOf(a[0]) >= 0]);
     });
     $('btNotes').innerHTML = notes.length ? notes.map(function (n) {
-      return '<li><span class="k">' + n[0] + '</span><span><b>' + esc(n[1]) + '</b> ' + esc(n[2]) + '<span class="d">' + esc(n[3]) + '</span></span></li>';
+      return '<li><span class="k">' + n[0] + '</span><span><b>' + esc(n[1]) + '</b> ' + esc(n[2]) +
+        (n[4] ? '<span class="u">' + (o ? 'この産地' : 'この地域') + 'ではあまり見かけない組み合わせ</span>' : '') +
+        '<span class="d">' + esc(n[3]) + '</span></span></li>';
     }).join('') : '<li><span class="empty">条件を選ぶと、ここに傾向が出る。何も選ばないときは、すべて3の真ん中で表示する。</span></li>';
   }
 
