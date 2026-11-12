@@ -136,7 +136,6 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); ou
 .ref { border-top: 1px solid var(--line); padding-top: 10px; }
 .ref summary { cursor: pointer; font-size: 14px; font-weight: 700; padding: 6px 0; list-style-position: inside; }
 .ref-body { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; }
-.ref-lead { font-size: 13px; color: var(--muted); }
 .ref-h { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; }
 .bean-strip { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
 .lv {
@@ -170,7 +169,6 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); ou
 .grind-list .gname { font-size: 15px; font-weight: 700; }
 .grind-list .sugar, .grind-list .use { font-size: 12px; color: var(--muted); line-height: 1.5; }
 .badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; background: var(--flow-bg); color: var(--flow); white-space: nowrap; }
-.ref-tip { font-size: 13px; color: var(--muted); }
 
 /* 4:6 options */
 .opts { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
@@ -242,8 +240,6 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--flow); ou
 .idea.f b { color: var(--flow); }
 .idea.s b { color: var(--steep); }
 .idea span { font-size: 14px; }
-.caveat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
-.caveat ul { margin: 0; padding-left: 1.2em; }
 .src { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
 .src a { color: var(--ink); text-underline-offset: 3px; }
 section { display: flex; flex-direction: column; gap: 12px; }
@@ -309,8 +305,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
 .mc-tbl td.v { font-size: 16px; font-weight: 600; }
 .mc-tbl td.edge { color: var(--muted); }
 .mc-tbl tr.band td { border-top: 2px solid var(--line); }
-.mc-notes { font-size: 13px; color: var(--muted); }
-.mc-notes ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }
 
 /* 豆の味の傾向(豆タブ) */
 .bt-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
@@ -352,7 +346,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
 .bt-notes .d { display: block; font-family: var(--font-num); font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .bt-notes .empty { display: block; font-size: 13px; color: var(--muted); }
 .bt-notes .u { display: block; font-size: 12px; font-weight: 700; color: var(--steep); margin-top: 2px; }
-.bt-caution { font-size: 13px; line-height: 1.6; color: var(--steep); background: var(--steep-bg); border-radius: 6px; padding: 10px 12px; }
 .bt-status { font-size: 14px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
 .bt-status ul { margin: 6px 0 0; padding-left: 1.2em; font-size: 13px; }
 
@@ -408,7 +401,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <div class="mills" id="millBox" hidden>
       <p class="mills-h">手持ちのミルでの目安</p>
       <ul id="millList"></ul>
-      <p class="mills-note" id="millNote">目安です。実測以外は計算で出した値で、ミルの刃の形や豆によって変わる。</p>
+      <p class="mills-note" id="millNote" hidden></p>
     </div>
   </header>
 
@@ -436,12 +429,10 @@ section { display: flex; flex-direction: column; gap: 12px; }
       <details class="ref" id="refBox">
         <summary>焙煎度と挽き目の見本</summary>
         <div class="ref-body">
-          <p class="ref-lead">豆の袋に書いてある焙煎度をタップすると、上の浅煎り・中煎り・深煎りが切り替わる。</p>
           <div class="bean-strip" id="beanStrip"></div>
           <p class="bean-info" id="beanInfo" aria-live="polite"></p>
           <h3 class="ref-h">挽き目</h3>
           <ul class="grind-list" id="grindList"></ul>
-          <p class="ref-tip">落ちきるのが目安より遅いなら少し粗く、早くて味が薄いなら少し細かくする。豆の色と粒は画面上の目安。</p>
         </div>
       </details>
     </div>
@@ -495,9 +486,8 @@ section { display: flex; flex-direction: column; gap: 12px; }
     <div class="notes" id="why"></div>
   </section>
 
-  <section aria-labelledby="h-memo">
-    <h2 id="h-memo">メモ</h2>
-    <div class="caveat"><ul id="memo"></ul></div>
+  <section aria-labelledby="h-src">
+    <h2 id="h-src">出典</h2>
     <p class="src" id="src"></p>
   </section>
   </div>
@@ -526,7 +516,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
         <ul class="bt-notes" id="btNotes"></ul>
       </div>
     </div>
-    <p class="bt-caution">どれも一般的な傾向で、同じ産地・品種でも農園や焙煎所によって味は変わる。数値は仮の値で、飲んだ印象に合わせて data/coffee/ の JSON を直していく前提。レシピの湯温や挽き目は変わらない。</p>
   </div>
 
   <div id="millView" class="view" hidden>
@@ -545,21 +534,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
       <summary id="mcAllSum">対応表を全部見る</summary>
       <div class="mc-tbl"><table><colgroup id="mcCols"></colgroup><thead><tr id="mcHead"></tr></thead><tbody id="mcRows"></tbody></table></div>
     </details>
-    <div class="mc-notes">
-      <ul>
-        <li>コマンダンテ・C3s・Varia VS3 は、早見表サイト(Honest Coffee Guide)の図から、設定と粒の大きさの対応を読み取った。クリックや目盛りは刃を閉じた位置から数える。</li>
-        <li>ナイスカットGは公開されている目盛りの目安(1 細挽き・3.5 カリタ挽き・4.5 中挽き・8 粗挽き)からの推定。早見表の図とは合わないので使っていない。</li>
-        <li>Varia VS3 は段なしの目盛りなので、0.5刻みで表示している。</li>
-        <li>式は data/coffee/grinders.json の scale(粒の大きさ = a × 設定 + b)。直せば換算も変わる。</li>
-      </ul>
-    </div>
-    <p class="bt-caution">刃の形(円錐刃とカット刃)が違うと、同じ粒の大きさでも粉の揃い方が違う。換算はあくまで出発点で、美味しかった設定を実測として残していく前提。</p>
-    <p class="src">
-      <a href="https://honestcoffeeguide.com/coffee-grind-size-chart/">Honest Coffee Guide 挽き目の早見表</a>
-      <a href="https://honestcoffeeguide.com/comandante-c40-mk4-grind-settings/">Honest Coffee Guide コマンダンテ C40 MK4 の挽き目</a>
-      <a href="https://honestcoffeeguide.com/timemore-c3s-grind-settings/">Honest Coffee Guide Timemore C3S の挽き目</a>
-      <a href="https://kakakumag.com/seikatsu-kaden/?id=22507&amp;lid=at_3198">価格.comマガジン ナイスカットG</a>
-    </p>
   </div>
 </div>
 
@@ -631,15 +605,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
         ['f', '次に透過', 'スイッチを開けて、成分をしっかり引き出す。'],
         ['s', '最後は浸漬', '雑味が出やすい後半は、湯温を下げて閉じる。']
       ],
-      memo: [
-        '1:30の注湯の間に、ケトルへ水を足して湯温を下げる。ここが一番あわただしい。',
-        '透過の湯温は、粕谷さんが示した焙煎度別の目安(浅煎り93℃前後、中煎り88℃前後、深煎り83℃前後)を使っている。元のレシピは約90℃。',
-        '最後の浸漬の湯温は、元レシピの70〜80℃の範囲を、焙煎度に合わせてこのページで割り振った目安(浅80℃、中75℃、深70℃)。粕谷さんの指定ではない。',
-        '最初の蒸らしは記事によって40秒と45秒の表記がある。このページは45秒にしている。',
-        '挽き目は、解説記事の筆者がコマンダンテ28クリック(中挽き程度)で淹れていた例。粕谷さんの指定値ではない。',
-        '粕谷さんの動画を見た人の解説記事をもとにまとめたもの。細かい数値は動画で確認する。',
-        '動画の元祖ハイブリッドは透過から始めるレシピで、フルーティさ重視。こちらは甘み重視。'
-      ],
       src: ['beats', 'waves', 'note', 'dime']
     },
     m46: {
@@ -665,14 +630,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
         ['f', '前半の4割', '1投目と2投目の分け方で、甘さと酸味のバランスを決める。1投目を少なくすると甘め、多くすると明るめになる。'],
         ['f', '後半の6割', '注ぐ回数で濃さを決める。回数が多いほど濃い。粕谷さんのおすすめは3回。']
       ],
-      memo: [
-        '時刻と量は、粕谷さんの店 Philocoffea の公式ページのとおり(後半を3回に分けるとき)。',
-        '後半を1回・2回にしたときの注ぐ時刻は、このページで決めた目安。',
-        '甘め・明るめの1投目の量(粉量の2.5倍・3.5倍)は、このページで決めた例。公式は「1投目を2投目より少なく(多く)」とだけ書いている。',
-        '深煎りは濃く出やすいので、後半を2回から始めるのがおすすめとされている。',
-        '挽き目は中粗〜粗挽き。時刻どおりに湯が落ちるよう、挽き目で合わせる。',
-        'HARIOスイッチは、開けたまま使えばV60と同じように淹れられる。'
-      ],
       src: ['philo', 'precious', 'dime']
     },
     sw1: {
@@ -690,11 +647,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
         ['s', '閉じて浸す', '全量を浸すので、注ぎ方で味がぶれにくい。'],
         ['f', '開けて落とす', '浸す時間で濃さが変わる。長いほど濃い。']
       ],
-      memo: [
-        '粉量・湯量・時間は、このページで決めた目安。HARIO公式の数値は見つけられなかった。',
-        '浸す時間は、スイッチを試したレビュー記事の「約2分」を使っている。',
-        '湯温は4:6メソッドと同じ、焙煎度別の目安。'
-      ],
       src: ['bepal', 'dime']
     },
     mugen: {
@@ -710,13 +662,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
       },
       why: [
         ['f', '一度に注ぐ', 'ドリッパーの溝でペーパーが貼りつき、湯がゆっくり一定の速さで落ちる。蒸らしや分けて注ぐ手間がいらない。']
-      ],
-      memo: [
-        'HARIOの公式レシピ(粉20g、お湯240ml、91℃、蒸らしなし)。比率は1:12。',
-        'MUGENドリッパー用のレシピ。HARIOスイッチやV60では湯の落ち方が違う。',
-        '挽き目は中挽きと書く記事と、中細挽きと書く記事がある。',
-        '所要時間は公式の「2〜3分」から、2:30を目安にしている。',
-        '注ぐのにかける時間(0:30)は、このページの目安。'
       ],
       src: ['kurasu', 'impress', 'harioEu']
     },
@@ -741,13 +686,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
       why: [
         ['f', 'お湯は半分', 'ホットの半分の湯量で濃く淹れて、氷で薄まる分を見込む。'],
         ['f', '氷に直接落とす', 'サーバーの氷ですぐ冷やして、香りを逃がさない。']
-      ],
-      memo: [
-        '粕谷さんのYouTube「急冷式アイスコーヒー」(4:6メソッド)を見た人のブログの要約をもとにしている。細かい数値は動画で確認する。',
-        'お湯はホットの半分(粉20gに150g)を30gずつ5回。サーバーに氷80g(粉量の4倍)を入れておく。',
-        '注ぐ時刻は、ブログの「1投目で40秒蒸らす」「以降は30秒間隔」から決めた目安。',
-        '甘め(1投目20g→2投目40g)と明るめ(40g→20g)は、ブログに書かれていた例。',
-        '溶けにくい純氷(コンビニやスーパーで売っている氷)がいいとされている。'
       ],
       src: ['ytIced', 'blogIced', 'philo']
     },
@@ -776,16 +714,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
         ['f', '後半3投は75℃', '湯温を下げて、後半に出やすい雑味を抑える。'],
         ['f', '7回に分ける', '少量ずつ短い間隔で注ぎ、湯の流れを一定に保つ。']
       ],
-      memo: [
-        'ジャパン ブリューワーズ カップ2026の決勝(2026年10月17日)で使われたレシピ。豆はコロンビア ラ・ネグリタ農園のゲイシャ(アナエロビックナチュラル、浅煎り)。',
-        '数値は、SCAJ公式の決勝配信をもとにまとめた記事から。注ぐ時刻は「20秒ごと」から決めた目安。',
-        '終わりの時刻は示されていない。3:00はこのページの目安。',
-        '20秒で90℃から75℃に切り替えるので、75℃の湯を別のケトルに用意しておくとよい。',
-        '粒度は約1200μm(ミルはLAGOM 01)。ミルの目盛りの値ではない。',
-        '粉量は0.5g刻みで変えられる。お湯は粉量の12倍を7回に分ける。',
-        '予選は9投で、決勝は豆に合わせて7投にしたとのこと。',
-        '「考え方」は、湯温と注ぎ方からこのページで読み取ったもの。選手本人の説明ではない。'
-      ],
       src: ['jbrcRecipe', 'jbrcPhilo', 'jbrcResult']
     },
     yamaguchi: {
@@ -802,12 +730,6 @@ section { display: flex; flex-direction: column; gap: 12px; }
         ];
       },
       why: [],
-      memo: [
-        '自分で決めたレシピ。粉15gで、スケールが30g → 150g → 230gになるまで注ぐ。',
-        '1投目と2投目の湯温は、ほかのレシピと同じ焙煎度別の目安。3投目は70℃。',
-        'スイッチは開けたまま。最後に閉じるかどうかは自由。',
-        '粉の量を変えると、注ぐ量は粉量の2倍・10倍・約15.3倍で計算する。'
-      ],
       src: []
     },
     cold: {
@@ -829,18 +751,10 @@ section { display: flex; flex-direction: column; gap: 12px; }
         ['s', '時間で抽出する', 'お湯を使わず、時間をかけて成分を出す。中煎り・深煎りのよさが出やすい。'],
         ['f', '濃いめに作る', '氷を入れて飲む。濃ければ水や牛乳で割る。']
       ],
-      memo: [
-        '粉50gに水700g(比率1:14)、10〜12時間。Philocoffeaの記事(粕谷さん名義)の作り方。',
-        '浸けておく場所(冷蔵庫か常温か)は記事に書かれていない。',
-        '残りは冷蔵庫に入れれば、2〜3日は味が落ちにくい。',
-        '中煎りか深煎りの豆が向いているとされている。',
-        '時間が長いので、タイマー中も画面は消してよい。こす時刻(10時間後)を出す。音は画面がついているときだけ鳴る。'
-      ],
       src: ['philoCold']
     }
   };
   var ORDER = ['hybrid', 'm46', 'sw1', 'mugen', 'jbrc26', 'yamaguchi', 'iced46', 'cold'];
-  var COMMON_MEMO = 'タイマー中は、手順が切り替わるたびに短い音が2回、終わりの時刻で3回鳴る。iPhoneは消音モードだと鳴らない。';
 
   // ---------- 保存 ----------
   // 設定は端末内(localStorage)に保存。使えない環境でも初期値で動く
@@ -953,8 +867,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
     $('why').innerHTML = R.why.map(function (w) {
       return '<div class="idea ' + w[0] + '"><b>' + w[1] + '</b><span>' + w[2] + '</span></div>';
     }).join('');
-    $('memo').innerHTML = R.memo.concat([COMMON_MEMO]).map(function (m) { return '<li>' + m + '</li>'; }).join('');
-    $('src').innerHTML = '出典:' + R.src.concat(['roast', 'grind']).map(function (k) {
+    $('src').innerHTML = R.src.concat(['roast', 'grind']).map(function (k) {
       return '<a href="' + SRC[k][0] + '" target="_blank" rel="noopener">' + SRC[k][1] + '</a>';
     }).join('');
     renderSteps();
@@ -1276,6 +1189,7 @@ section { display: flex; flex-direction: column; gap: 12px; }
         if (view === 'mill') renderMillView();
         $('millBox').hidden = false;
         $('millList').innerHTML = '';
+        $('millNote').hidden = false;
         $('millNote').innerHTML = 'data/coffee/ のミルの JSON に直すところがある。<ul>' +
           errs.slice(0, 8).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
         return;
